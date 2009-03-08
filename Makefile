@@ -1,4 +1,4 @@
-all: ds1 ds2 ds3 ds4 ds5 ds6 ds7 ds8 ds9 ring1 ring2 ring3 ring4
+all: ds1 ds2 ds3 ds4 ds5 ds6 ds7 ds8 ds9 ring1 ring2 ring3 ring4 ring5 ring6
 
 clean:
 	rm -f ds? ring?
@@ -29,5 +29,9 @@ ring2: ring2.c
 ring3: ring3.c
 	gcc -o $@ $<
 ring4: ring4.c
+	gcc -o $@ $< -lm
+ring5: ring5.c
+	gcc -o $@ $< -lm
+ring6: ring6.c
 	gcc -o $@ $< -lm
 
