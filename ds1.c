@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <assert.h>
 #include <stdio.h>
 #include <fcntl.h>
 
@@ -13,6 +14,7 @@
 #include <sys/io.h>
 
 #include "find_intel.h"
+#include "intelfbhw.h"
 #include "mmap.h"
 
 int main() {
@@ -39,10 +41,15 @@ int main() {
 	}
 
 	{
-		MMIO(0x71180) = 0x80000000 | (5 << 26) | (0 << 20); /* enable, 16bpp format, no pixel doubling */
-		MMIO(0x71184) = 0; /* start at zero */
-		MMIO(0x71188) = 1280*2;
-		MMIO(0x7119C) = 0; /* this causes the change to occur */
+		const int display = DISPLAY_B;
+		*(intel_hw_display_plane(display,DISPLAY_PLANE_CONTROL)) =
+			(1 << 31) | (5 << 26) | (0 << 20); /* enable, 16bpp format, no pixel doubling */
+		*(intel_hw_display_plane(display,DISPLAY_PLANE_LINEAR_OFFSET)) =
+			0; /* start at zero */
+		*(intel_hw_display_plane(display,DISPLAY_PLANE_STRIDE)) =
+			1280*2;
+		*(intel_hw_display_plane(display,DISPLAY_PLANE_SURFACE_BASE_ADDRESS)) =
+			0; /* this causes the change to occur */
 	}
 
 	unmap_intel_resources();

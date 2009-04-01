@@ -516,4 +516,49 @@
 /* in bytes */
 #define MAX_MONO_IMM_SIZE		128
 
+/*************************************************************************
+ *    Additional constants by Jon
+ *************************************************************************/
+
+enum {
+	DISPLAY_A=0,
+	DISPLAY_B=1,
+	DISPLAY_C=2
+};
+
+/* display plane offsets */
+enum {
+	DISPLAY_PLANE_CONTROL=0,			/* 0x70180 */
+	DISPLAY_PLANE_LINEAR_OFFSET=0x4,		/* 0x70184 */
+	DISPLAY_PLANE_STRIDE=0x8,			/* 0x70188 */
+	DISPLAY_PLANE_SPRITE_KEY=0x14,			/* 0x70194 */
+	DISPLAY_PLANE_SPRITE_KEY_MASK=0x18,		/* 0x70198 */
+	DISPLAY_PLANE_SURFACE_BASE_ADDRESS=0x1C,	/* 0x7019C */
+	DISPLAY_PLANE_TILED_OFFSET=0x24,		/* 0x701A4 */
+	DISPLAY_PLANE_FLIP_QUEUE_STATUS=0x80		/* 0x70200 */
+};
+
+/* display pipeline offsets */
+enum {
+	DISPLAY_PIPE_SCAN_LINE=0,			/* 0x70000 */
+	DISPLAY_PIPE_SCAN_LINE_RANGE_COMPARE=4,		/* 0x70004 */
+	DISPLAY_PIPE_CONFIGURATION=8,			/* 0x70008 */
+	DISPLAY_PIPE_GAMMA_MAX_RED=0x10,		/* 0x70010 */
+	DISPLAY_PIPE_GAMMA_MAX_GREEN=0x14,		/* 0x70014 */
+	DISPLAY_PIPE_GAMMA_MAX_BLUE=0x18,		/* 0x70018 */
+	DISPLAY_PIPE_STATUS=0x24,			/* 0x70024 */
+	DISPLAY_PIPE_FRAME_COUNT_HIGH=0x40,		/* 0x70040 */
+	DISPLAY_PIPE_FRAME_COUNT_LOW_PIXEL_COUNT=0x44,	/* 0x70044 */
+};
+
+/* return MMIO base for Pipe I/O */
+static inline unsigned int intel_hw_pipe_reg(unsigned int pipe,unsigned int offset) {
+	return ((pipe & 1) ? 0x71000 : 0x70000)+offset;
+}
+
+/* return MMIO base for display plane control */
+static inline unsigned int intel_hw_display_plane_reg(unsigned int d,unsigned int offset) {
+	return (0x70180 + (d*0x1000))+offset;
+}
+
 #endif /* _INTELFBHW_H */

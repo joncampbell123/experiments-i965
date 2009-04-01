@@ -13,6 +13,7 @@
 #include <sys/io.h>
 
 #include "find_intel.h"
+#include "intelfbhw.h"
 #include "mmap.h"
 
 int main() {
@@ -26,7 +27,7 @@ int main() {
 	{
 		unsigned int pval = -1;
 		while (1) {
-			unsigned int nval = MMIO(0x71000);
+			unsigned int nval = *intel_hw_pipe(PIPE_B,DISPLAY_PIPE_SCAN_LINE);
 			if (pval != nval) {
 				pval = nval;
 				printf("0x%08X\n",nval);

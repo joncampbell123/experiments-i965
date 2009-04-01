@@ -26,7 +26,7 @@ int main() {
 	{
 		unsigned int pval = -1;
 		while (1) {
-			unsigned int nval = (MMIO(0x71044) >> 24) | ((MMIO(0x71040) & 0xFFFF) << 8); /* watch the page counter */
+			unsigned int nval = ((*intel_hw_pipe(PIPE_B,DISPLAY_PIPE_FRAME_COUNT_LOW_PIXEL_COUNT)) >> 24) | (((*intel_hw_pipe(PIPE_B,DISPLAY_PIPE_FRAME_COUNT_HIGH)) & 0xFFFF) << 8); /* watch the page counter */
 			if (pval != nval) {
 				printf("0x%08X\n",nval);
 				pval = nval;
