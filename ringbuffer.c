@@ -38,7 +38,11 @@ void mi_noop_id(uint32_t id) {
 /* finished emitting, i.e. we want to update the hardware's copy of the tail pointer */
 void ring_emit_finish() {
 	/* enforce QWORD boundary */
-	if (ptr_to_fb(ring_tail) & 4) ring_emit(MI_NOOP);
+	if (ptr_to_fb(ring_tail) & 4) {
+		printf("ringbuffer: non-qword aligned emit finish @ 0x%08X, adding extra NOP\n",ptr_to_fb(ring_tail));
+		ring_emit(MI_NOOP);
+		printf(" -> 0x%08X\n",ptr_to_fb(ring_tail));
+	}
 	MMIO(0x2030) = ptr_to_fb(ring_tail);
 }
 
