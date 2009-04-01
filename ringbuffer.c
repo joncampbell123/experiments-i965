@@ -94,9 +94,6 @@ void stop_ring() {
 	}
 
 	MMIO(0x203C) = 0x00000000;
-	MMIO(0x2030) = 0;					/* write RING_TAIL */
-	MMIO(0x2034) = 0;					/* write RING_HEAD */
-	MMIO(0x2038) = 0;					/* write RING_START */
 }
 
 volatile uint32_t read_nopid() {
