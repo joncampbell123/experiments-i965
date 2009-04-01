@@ -25,12 +25,16 @@ int main() {
 		return 1;
 
 	{
-		unsigned int pval = -1;
+		unsigned int pval = -1,i;
 		while (1) {
-			unsigned int nval = *intel_hw_pipe(PIPE_B,DISPLAY_PIPE_SCAN_LINE);
+			unsigned int nval = intel_hw_pipe_read_scan_line(PIPE_B);
 			if (pval != nval) {
 				pval = nval;
-				printf("0x%08X\n",nval);
+
+				int x;
+				unsigned short *p = (unsigned short*)(((unsigned char*)fb_base) + (1280*2*nval));
+				for (x=0;x < 16;x++,p++)
+					p[0]++;
 			}
 		}
 	}

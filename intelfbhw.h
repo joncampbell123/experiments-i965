@@ -561,4 +561,7 @@ static inline unsigned int intel_hw_display_plane_reg(unsigned int d,unsigned in
 	return (0x70180 + (d*0x1000))+offset;
 }
 
+unsigned int intel_hw_pipe_read_frame_count(unsigned int pipe);
+unsigned int intel_hw_pipe_read_scan_line(unsigned int pipe);
+
 #endif /* _INTELFBHW_H */
