@@ -30,17 +30,7 @@ int main() {
 	/* I pick the 2MB mark for the ring buffer. Use larger space for speed tests, about slightly less than 2MB */
 	set_ring_area(0x200000,2040*1024);
 	start_ring();
-
-	unsigned char *cursor = fb_base + 0x400000;
-	{
-		int x;
-		unsigned int *p_xor = (unsigned int*)cursor;
-
-		for (x=0;x < 256*256;x++) {
-			int a = x >> 8;
-			p_xor[x] = mult_rgb(x,a) | (a << 24);
-		}
-	}
+	make_gradient_test_cursor_argb(fb_base + 0x400000);
 
 	fprintf(stderr,"Booting 2D ringbuffer.\n");
 

@@ -25,16 +25,7 @@ int main() {
 	if (!map_intel_resources())
 		return 1;
 
-	unsigned char *cursor = fb_base + 0x400000;
-	{
-		int x;
-		unsigned int *p_xor = (unsigned int*)cursor;
-
-		for (x=0;x < 256*256;x++) {
-			int a = x >> 8;
-			p_xor[x] = mult_rgb(x,a) | (a << 24);
-		}
-	}
+	make_gradient_test_cursor_argb(fb_base + 0x400000);
 
 	MMIO(0x70080) = (1 << 28); /* cursor A to pipe B, 64x64 4-color */
 	MMIO(0x70084) = 0x400000;      /* follow the buffer */

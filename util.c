@@ -27,3 +27,13 @@ unsigned int mult_rgb(unsigned int x,int a) {
 		(((b * a) >> 8) << 16);
 }
 
+void make_gradient_test_cursor_argb(unsigned char *cursor) {
+	int x;
+	unsigned int *p_xor = (unsigned int*)cursor;
+
+	for (x=0;x < 256*256;x++) {
+		int a = x >> 8;
+		p_xor[x] = mult_rgb(x,a) | (a << 24);
+	}
+}
+
