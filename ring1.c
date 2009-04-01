@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <signal.h>
 #include <stdio.h>
 #include <fcntl.h>
 
@@ -18,8 +19,18 @@
 #include "util.h"
 #include "mmap.h"
 
+int DIE=0;
+
+void sigma(int x) {
+	if (++DIE >= 3)
+		exit(1);
+}
+
 int main() {
 	iopl(3);
+	signal(SIGINT,sigma);
+	signal(SIGTERM,sigma);
+	signal(SIGQUIT,sigma);
 
 	if (!get_intel_resources())
 		return 1;
@@ -39,7 +50,7 @@ int main() {
 		int count=0;
 
 		/* wait for "1" to appear in NOPID */
-		while (1) {
+		while (DIE == 0) {
 			/* write 8 no-ops that change NOPID. you can see the results on the console.
 			 * also, you can make sure it wraps around properly. Fun, huh? */
 			mi_noop_id(rand());
