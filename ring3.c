@@ -15,12 +15,7 @@
 #include "intelfbhw.h"
 #include "find_intel.h"
 #include "util.h"
-
-int mem_fd = -1;
-unsigned char *fb_base;
-volatile uint32_t *fb_mmio;
-
-#define MMIO(x) *( (volatile uint32_t*) (((unsigned char*)fb_mmio) + (x)) )
+#include "mmap.h"
 
 volatile uint32_t *ring_base,*ring_end,*ring_head,*ring_tail,ring_size;
 
@@ -87,29 +82,8 @@ int main() {
 
 	if (!get_intel_resources())
 		return 1;
-
-	if (0) {
-		int tty_fd = open("/dev/tty0",O_RDWR);
-		ioctl(tty_fd,KDSETMODE,KD_GRAPHICS);
-		close(tty_fd);
-	}
-
-	if ((mem_fd = open("/dev/mem",O_RDWR)) < 0) {
-		fprintf(stderr,"Cannot open /dev/mem\n");
+	if (!map_intel_resources())
 		return 1;
-	}
-
-	fb_base = (unsigned char*)mmap(NULL,fb_size_vis,PROT_READ|PROT_WRITE,MAP_SHARED,mem_fd,fb_base_vis);
-	if (fb_base == (unsigned char*)-1) {
-		fprintf(stderr,"Cannot mmap framebuffer\n");
-		return 1;
-	}
-
-	fb_mmio = (uint32_t*)mmap(NULL,fb_size_mmio,PROT_READ|PROT_WRITE,MAP_SHARED,mem_fd,fb_base_mmio);
-	if (fb_mmio == (unsigned char*)-1) {
-		fprintf(stderr,"Cannot mmap MMIO\n");
-		return 1;
-	}
 
 	/* I pick the 2MB mark for the ring buffer. Use larger space for speed tests, about slightly less than 2MB */
 	set_ring_area(0x200000,2040*1024);
@@ -169,17 +143,7 @@ int main() {
 	}
 
 	stop_ring();
-
-	munmap(fb_base_mmio,fb_size_mmio);
-	munmap(fb_base_vis,fb_size_vis);
-	close(mem_fd);
-
-	if (1) {
-		int tty_fd = open("/dev/tty0",O_RDWR);
-		ioctl(tty_fd,KDSETMODE,KD_TEXT);
-		close(tty_fd);
-	}
-
+	unmap_intel_resources();
 	return 0;
 }
 
