@@ -1,3 +1,5 @@
+#ifndef FIND_INTEL_H
+#define FIND_INTEL_H
 
 enum {
 	INTEL_UNKNOWN=0,
@@ -5,7 +7,7 @@ enum {
 	INTEL_965
 };
 
-const char *intel_device_chip_str[];
+extern const char *intel_device_chip_str[];
 
 extern unsigned int intel_pci_device;
 extern unsigned int intel_device_chip;
@@ -15,4 +17,6 @@ extern unsigned long long fb_size_vis,fb_size_mmio;
 int readz(int fd,char *line,int sz);
 int file_one_line(const char *path,char *line,int sz);
 int get_intel_resources();
+
+#endif
 
