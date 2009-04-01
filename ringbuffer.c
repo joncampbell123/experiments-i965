@@ -72,3 +72,39 @@ volatile uint32_t read_nopid() {
 	return MMIO(0x2094);
 }
 
+void mi_load_imm(uint32_t what,uint32_t with) {
+	ring_emit((0x22 << 23) | 1);	/* MI_LOAD_REGISTER_IMM with 1 DWORD and all byte enables on */
+	ring_emit(what);
+	ring_emit(with);
+}
+
+void color_blit_fill(uint32_t dest,int width,int height,int pitch,uint32_t val) {
+	ring_emit((2 << 29) | (0x40 << 22) | (3 << 20) | 3);	/* 3 DWORDs extra, fill ARGB, COLOR_BLT */
+	ring_emit((1 << 24) | (0xF0 << 16) | (pitch & 0xFFFF));		/* 16bpp 565 SRCCOPY */
+	ring_emit((height << 16) | (width*2));
+	ring_emit(dest);
+	ring_emit(val);
+}
+
+void src_copy_blit(uint32_t dest,int dw,int dh,int dp,uint32_t src,int sp) {
+	ring_emit((2 << 29) | (0x43 << 22) | (3 << 20) | 4);
+	ring_emit((1 << 24) | (0xCC << 16) | (dp & 0xFFFF));	/* SRCCOPY 16bpp 565 */
+	ring_emit((dh << 16) | (dh * 2));
+	ring_emit(dest);
+	ring_emit(sp);
+	ring_emit(src);
+}
+
+void wait_ring_space(unsigned int x) {
+	const int tot = ring_size >> 2;
+	do {
+		unsigned int head = MMIO(0x2034) & 0x1FFFFC;
+		volatile uint32_t *hw_ptr = ring_base + (head >> 2);
+		int spc = (int)(ring_tail - hw_ptr);
+		if (spc < 0) spc += tot;
+		int rem = tot - (spc + 1);
+		if (rem >= x) break;
+		usleep(10);
+	} while (1);
+}
+
