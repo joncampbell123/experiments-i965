@@ -56,6 +56,7 @@ int main() {
 	 * to avoid a race with the 2D ring we stop the ring, fill with commands, then start it again. */
 	stop_ring();
 	{
+		int stride = *(intel_hw_display_plane(DISPLAY_B,DISPLAY_PLANE_STRIDE));
 		unsigned int c,cmax=10000;
 		/* prep the cursors */
 		mi_load_imm(0x70080,1 << 28);
@@ -71,14 +72,18 @@ int main() {
 			y1 = cy + (cos(a) * 240);
 			x2 = cx + (sin(a*5) * 360);
 			y2 = cy + (cos(a*5) * 180);
-			ring_emit((3 << 23) | (1 << 18)); /* pipe B: wait for VBLANK */
+			if (intel_device_chip == INTEL_965)
+				ring_emit((3 << 23) | (1 << 18)); /* pipe B: wait for VBLANK */
+			else /* this works on my 855GM based laptop */
+				ring_emit((3 << 23) | (1 << 3)); /* pipe B: wait for VBLANK */
+
 			mi_load_imm(0x700C0,(1 << 28) | 0x20 | 3);
 			mi_load_imm(0x700C8,(y1 << 16) | x1);
 			mi_load_imm(0x70080,(1 << 28) | 0x20 | 3);
 			mi_load_imm(0x70088,(y2 << 16) | x2);
 			int py = c&255;
 			if (py & 128) py = 256 - py;
-			mi_load_imm(0x71184,py*1280*2);
+			mi_load_imm(0x71184,py*stride);
 			mi_load_imm(0x7119C,0);
 			mi_noop_id(c);
 		}

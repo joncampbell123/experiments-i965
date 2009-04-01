@@ -46,6 +46,9 @@ void fill_no_ops(int x) {
 }
 
 void set_ring_area(uint32_t base,uint32_t size) {
+	MMIO(0x203C) = 0x00000000;				/* RING_CONTROL, disable ring */
+	usleep(10000);
+
 	/* WARNING: size must be multiple of 4096 */
 	ring_size = (size + 4095) & (~4095);
 	ring_base = (volatile uint32_t*)(fb_base + base);
@@ -54,13 +57,19 @@ void set_ring_area(uint32_t base,uint32_t size) {
 	ring_tail = ring_base;
 	fill_no_ops(64);	/* 64 no-ops cannot fill even 4096 bytes */
 
-	MMIO(0x203C) = 0x00000000;				/* RING_CONTROL, disable ring */
+	MMIO(0x2030) = 0;					/* write RING_TAIL */
+	MMIO(0x2034) = 0;					/* write RING_HEAD */
+	MMIO(0x2038) = 0;					/* write RING_START */
+
+	usleep(10000);
+
 	MMIO(0x2030) = ptr_to_fb(ring_tail) & 0x1FFFFC;		/* write RING_TAIL */
 	MMIO(0x2034) = ptr_to_fb(ring_head) & 0x1FFFFC;		/* write RING_HEAD */
 	MMIO(0x2038) = ptr_to_fb(ring_base) & 0xFFFFF000;	/* write RING_START */
 }
 
 void start_ring() {
+	MMIO(0x20C0) = 0;
 	MMIO(0x203C) = (((ring_size >> 12) - 1) << 12) | (1 << 11) | 1;	/* set size, and enable */
 }
 
