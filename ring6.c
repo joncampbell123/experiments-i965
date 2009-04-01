@@ -14,25 +14,14 @@
 #include <sys/io.h>
 
 #include "intelfbhw.h"
-
 #include "find_intel.h"
-
-//#define MI_NOOP		0x00000000
+#include "util.h"
 
 int mem_fd = -1;
 unsigned char *fb_base;
 volatile uint32_t *fb_mmio;
 
 #define MMIO(x) *( (volatile uint32_t*) (((unsigned char*)fb_mmio) + (x)) )
-
-unsigned int mult_rgb(unsigned int x,int a) {
-	int r = x & 0xFF;
-	int g = (x >> 8) & 0xFF;
-	int b = (x >> 16) & 0xFF;
-	return	((r * a) >> 8) |
-		(((g * a) >> 8) << 8) |
-		(((b * a) >> 8) << 16);
-}
 
 volatile uint32_t *ring_base,*ring_end,*ring_head,*ring_tail,ring_size;
 

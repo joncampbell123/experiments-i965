@@ -1,3 +1,5 @@
+/* find Intel PCI device, and determine framebuffer and MMIO resource locations */
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -18,6 +20,7 @@
 
 unsigned long long fb_base_vis=0,fb_base_mmio=0;
 unsigned long long fb_size_vis=0,fb_size_mmio=0;
+char sysfs_intel_graphics_dev[32] = {0};
 
 int readz(int fd,char *line,int sz) {
 	int rd = read(fd,line,sz-1);
@@ -51,6 +54,7 @@ int get_intel_resources() {
 	fb_size_vis = 0;
 	fb_base_mmio = 0;
 	fb_size_mmio = 0;
+	sysfs_intel_graphics_dev[0] = 0;
 
 /* scan the PCI bus for any Intel device.
  * Usually the integrated graphics chip is device 0:2:0 on the PCI bus */
@@ -113,6 +117,7 @@ int get_intel_resources() {
 			}
 			close(fd);
 
+			strncpy(sysfs_intel_graphics_dev,d->d_name,sizeof(sysfs_intel_graphics_dev));
 			break;
 		}
 
@@ -120,9 +125,13 @@ int get_intel_resources() {
 	};
 
 #if 1
+	printf("PCI device:  %s\n",sysfs_intel_graphics_dev);
 	printf("Framebuffer: Base 0x%08X Size 0x%08X\n",fb_base_vis,fb_size_vis);
 	printf("MMIO:        Base 0x%08X Size 0x%08X\n",fb_base_mmio,fb_size_mmio);
 #endif
+
+	if (fb_base_vis == 0 || fb_size_vis == 0 || fb_base_mmio == 0 || fb_size_mmio == 0)
+		return 0;
 
 	return 1;
 }
