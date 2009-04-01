@@ -1,37 +1,44 @@
 all: ds1 ds2 ds3 ds4 ds5 ds6 ds7 ds8 ds9 ring1 ring2 ring3 ring4 ring5 ring6
 
+INTEL_OBJS=find_intel.o
+
 clean:
 	rm -f ds? ring?
 
-ds1: ds1.c
-	gcc -o $@ $<
-ds2: ds2.c
-	gcc -o $@ $<
-ds3: ds3.c
-	gcc -o $@ $<
-ds4: ds4.c
-	gcc -o $@ $<
-ds5: ds5.c
-	gcc -o $@ $<
-ds6: ds6.c
-	gcc -o $@ $< -lm
-ds7: ds7.c
-	gcc -o $@ $<
-ds8: ds8.c
-	gcc -o $@ $<
-ds9: ds9.c
-	gcc -o $@ $<
+.c.o:
+	gcc -c -o $@ $<
 
-ring1: ring1.c
-	gcc -o $@ $<
-ring2: ring2.c
-	gcc -o $@ $<
-ring3: ring3.c
-	gcc -o $@ $<
-ring4: ring4.c
-	gcc -o $@ $< -lm
-ring5: ring5.c
-	gcc -o $@ $< -lm
-ring6: ring6.c
-	gcc -o $@ $< -lm
+ds1: ds1.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS)
+ds2: ds2.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS)
+ds3: ds3.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS)
+ds4: ds4.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS)
+ds5: ds5.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS)
+ds6: ds6.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS) -lm
+ds7: ds7.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS)
+ds8: ds8.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS)
+ds9: ds9.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS)
+ring1: ring1.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS)
+ring2: ring2.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS)
+ring3: ring3.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS)
+ring4: ring4.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS) -lm
+ring5: ring5.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS) -lm
+ring6: ring6.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS) -lm
+
+clean:
+	rm -f *.o
 

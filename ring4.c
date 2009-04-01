@@ -15,14 +15,11 @@
 
 #include "intelfbhw.h"
 
+#include "find_intel.h"
+
 //#define MI_NOOP		0x00000000
 
 int mem_fd = -1;
-unsigned long long fb_base_vis=0;
-unsigned long long fb_base_mmio=0;
-unsigned long long fb_size_vis=0;
-unsigned long long fb_size_mmio=0;
-
 unsigned char *fb_base;
 volatile uint32_t *fb_mmio;
 
@@ -106,10 +103,8 @@ double frtime() {
 int main() {
 	iopl(3);
 
-	fb_base_vis = 0xd0000000;
-	fb_size_vis = 256*1024*1024;
-	fb_base_mmio = 0xfc000000;
-	fb_size_mmio = 1024*1024;
+	if (!get_intel_resources())
+		return 1;
 
 	if (0) {
 		int tty_fd = open("/dev/tty0",O_RDWR);
