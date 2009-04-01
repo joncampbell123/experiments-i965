@@ -1,6 +1,7 @@
 all: ds1 ds2 ds3 ds4 ds5 ds6 ds7 ds8 ds9 ring1 ring2 ring3 ring4 ring5 ring6
 
 INTEL_OBJS=find_intel.o util.o mmap.o
+RINGBUFFER=ringbuffer.o
 
 clean:
 	rm -f ds? ring? *.o
@@ -26,16 +27,16 @@ ds8: ds8.o $(INTEL_OBJS)
 	gcc -o $@ $< $(INTEL_OBJS)
 ds9: ds9.o $(INTEL_OBJS)
 	gcc -o $@ $< $(INTEL_OBJS)
-ring1: ring1.o $(INTEL_OBJS)
-	gcc -o $@ $< $(INTEL_OBJS)
-ring2: ring2.o $(INTEL_OBJS)
-	gcc -o $@ $< $(INTEL_OBJS)
-ring3: ring3.o $(INTEL_OBJS)
-	gcc -o $@ $< $(INTEL_OBJS)
-ring4: ring4.o $(INTEL_OBJS)
-	gcc -o $@ $< $(INTEL_OBJS) -lm
-ring5: ring5.o $(INTEL_OBJS)
-	gcc -o $@ $< $(INTEL_OBJS) -lm
-ring6: ring6.o $(INTEL_OBJS)
-	gcc -o $@ $< $(INTEL_OBJS) -lm
+ring1: ring1.o $(INTEL_OBJS) $(RINGBUFFER)
+	gcc -o $@ $< $(INTEL_OBJS) $(RINGBUFFER)
+ring2: ring2.o $(INTEL_OBJS) $(RINGBUFFER)
+	gcc -o $@ $< $(INTEL_OBJS) $(RINGBUFFER)
+ring3: ring3.o $(INTEL_OBJS) $(RINGBUFFER)
+	gcc -o $@ $< $(INTEL_OBJS) $(RINGBUFFER)
+ring4: ring4.o $(INTEL_OBJS) $(RINGBUFFER)
+	gcc -o $@ $< $(INTEL_OBJS) $(RINGBUFFER) -lm
+ring5: ring5.o $(INTEL_OBJS) $(RINGBUFFER)
+	gcc -o $@ $< $(INTEL_OBJS) $(RINGBUFFER) -lm
+ring6: ring6.o $(INTEL_OBJS) $(RINGBUFFER)
+	gcc -o $@ $< $(INTEL_OBJS) $(RINGBUFFER) -lm
 
