@@ -43,7 +43,7 @@ void ring_emit_finish() {
 		ring_emit(MI_NOOP);
 		printf(" -> 0x%08X\n",ptr_to_fb(ring_tail));
 	}
-	MMIO(0x2030) = ptr_to_fb(ring_tail);
+	MMIO(0x2030) = ptr_to_fb(ring_tail)-ptr_to_fb(ring_base);
 }
 
 /* fill ring buffer with no-ops. assumes caller verified first that buffer can handle that many */
@@ -81,31 +81,6 @@ void set_ring_area(uint32_t base,uint32_t size) {
 void start_ring() {
 	MMIO(0x20C0) = 0;
 	MMIO(0x203C) = (((ring_size >> 12) - 1) << 12) | 1;	/* set size, and enable */
-
-	/* make sure that on our command the ring buffer is actually moving. some chipsets get stuck easily,
-	 * especially Intel 855GM based ones */
-	if (intel_device_chip == INTEL_855) {
-		int patience = 1000;
-		unsigned long tail = MMIO(0x2030);
-		unsigned long head = MMIO(0x2034);
-		while (patience-- > 0) {
-			usleep(1000);
-			unsigned long nt = MMIO(0x2030);
-			unsigned long nh = MMIO(0x2034);
-
-			if (nh != head)
-				break;
-		}
-
-		if (patience <= 0) {
-			printf("Intel 855GM warning: Ring buffer is not moving\n");
-			MMIO(0x203C) = 0x00000000;
-			MMIO(0x2030) = ptr_to_fb(ring_tail) & 0x1FFFFC;		/* write RING_TAIL */
-			MMIO(0x2034) = ptr_to_fb(ring_head) & 0x1FFFFC;		/* write RING_HEAD */
-			MMIO(0x2038) = ptr_to_fb(ring_base) & 0xFFFFF000;	/* write RING_START */
-			MMIO(0x203C) = (((ring_size >> 12) - 1) << 12) | (1 << 11) | 1;	/* set size, and enable */
-		}
-	}
 }
 
 void stop_ring() {
