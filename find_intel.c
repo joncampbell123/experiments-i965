@@ -13,14 +13,21 @@
 #include <linux/kd.h>
 
 #include <sys/io.h>
-
 #include <dirent.h>
 
 #include "find_intel.h"
 
+const char *intel_device_chip_str[] = {
+	"(unknown)",		/* INTEL_UNKNOWN */
+	"855",			/* INTEL_855 */
+	"965"			/* INTEL_965 */
+};
+
+unsigned int intel_device_chip;
 unsigned long long fb_base_vis=0,fb_base_mmio=0;
 unsigned long long fb_size_vis=0,fb_size_mmio=0;
 char sysfs_intel_graphics_dev[32] = {0};
+unsigned int intel_pci_device = 0;
 
 int readz(int fd,char *line,int sz) {
 	int rd = read(fd,line,sz-1);
@@ -54,6 +61,8 @@ int get_intel_resources() {
 	fb_size_vis = 0;
 	fb_base_mmio = 0;
 	fb_size_mmio = 0;
+	intel_pci_device = 0;
+	intel_device_chip = 0;
 	sysfs_intel_graphics_dev[0] = 0;
 
 /* scan the PCI bus for any Intel device.
@@ -77,6 +86,10 @@ int get_intel_resources() {
 			sprintf(path,"/sys/bus/pci/devices/%s/class",d->d_name);
 			if (!file_one_line(path,line,sizeof(line))) continue;
 			if ((strtoul(line,NULL,0)&0xFFFF00) != 0x030000) continue;
+
+			sprintf(path,"/sys/bus/pci/devices/%s/device",d->d_name);
+			if (!file_one_line(path,line,sizeof(line))) continue;
+			intel_pci_device = (unsigned int)strtoul(line,NULL,0);
 
 			sprintf(path,"/sys/bus/pci/devices/%s/resource",d->d_name);
 			if ((fd = open(path,O_RDONLY)) < 0) continue;
@@ -124,10 +137,19 @@ int get_intel_resources() {
 		closedir(dir);
 	};
 
+	switch (intel_pci_device) {
+		case 0x3582:
+			intel_device_chip = INTEL_855;
+			break;
+		case 0x2A02:
+			intel_device_chip = INTEL_965;
+			break;
+	};
+
 #if 1
-	printf("PCI device:  %s\n",sysfs_intel_graphics_dev);
-	printf("Framebuffer: Base 0x%08X Size 0x%08X\n",fb_base_vis,fb_size_vis);
-	printf("MMIO:        Base 0x%08X Size 0x%08X\n",fb_base_mmio,fb_size_mmio);
+	printf("PCI device:  %s (dev=0x%04X) Intel %s\n",sysfs_intel_graphics_dev,intel_pci_device,intel_device_chip_str[intel_device_chip]);
+	printf("Framebuffer: Base 0x%08LX Size 0x%08LX\n",fb_base_vis,fb_size_vis);
+	printf("MMIO:        Base 0x%08LX Size 0x%08LX\n",fb_base_mmio,fb_size_mmio);
 #endif
 
 	if (fb_base_vis == 0 || fb_size_vis == 0 || fb_base_mmio == 0 || fb_size_mmio == 0)
