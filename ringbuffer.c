@@ -46,7 +46,7 @@ void fill_no_ops(int x) {
 }
 
 void set_ring_area(uint32_t base,uint32_t size) {
-	MMIO(0x203C) = 0x00000000;				/* RING_CONTROL, disable ring */
+	stop_ring();
 	usleep(10000);
 
 	/* WARNING: size must be multiple of 4096 */
@@ -71,10 +71,49 @@ void set_ring_area(uint32_t base,uint32_t size) {
 void start_ring() {
 	MMIO(0x20C0) = 0;
 	MMIO(0x203C) = (((ring_size >> 12) - 1) << 12) | (1 << 11) | 1;	/* set size, and enable */
+
+	/* make sure that on our command the ring buffer is actually moving. some chipsets get stuck easily,
+	 * especially Intel 855GM based ones */
+	if (intel_device_chip == INTEL_855) {
+		int patience = 1000;
+		unsigned long tail = MMIO(0x2030);
+		unsigned long head = MMIO(0x2034);
+		while (patience-- > 0) {
+			usleep(100);
+			unsigned long nt = MMIO(0x2030);
+			unsigned long nh = MMIO(0x2034);
+
+			if (nh != head)
+				break;
+		}
+
+		if (patience <= 0)
+			printf("Intel 855GM warning: Ring buffer is not moving\n");
+	}
 }
 
 void stop_ring() {
 	MMIO(0x203C) = 0x00000000;
+
+	/* maybe if we truly wait for it to stop, I won't see random cases of the Intel 855GM
+	 * in my laptop locking up it's command processor this way and things will work? */
+	if (intel_device_chip == INTEL_855) {
+		int patience = 100;
+		unsigned long tail = MMIO(0x2030);
+		unsigned long head = MMIO(0x2034);
+		while (patience-- > 0) {
+			usleep(1000);
+			unsigned long nt = MMIO(0x2030);
+			unsigned long nh = MMIO(0x2034);
+
+			if (nh == head && nt == tail)
+				break;
+		}
+
+		if (patience <= 0)
+			printf("Intel 855GM warning: Ring buffer won't stop moving\n");
+	}
+
 }
 
 volatile uint32_t read_nopid() {
