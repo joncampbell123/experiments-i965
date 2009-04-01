@@ -37,3 +37,16 @@ void make_gradient_test_cursor_argb(unsigned char *cursor) {
 	}
 }
 
+int intel_wrong_chipset_warning() {
+	char c=0;
+
+	printf("This test only works on Intel 965 chips or higher\n");
+	printf("Hit ENTER to run the test anyway to see what happens, or CTRL+C to exit\n");
+
+	while (!(c == 13 || c == 10))
+		if (read(0,&c,1) < 1)
+			return 0;
+
+	return 1;
+}
+

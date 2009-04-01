@@ -25,6 +25,10 @@ int main() {
 	if (!map_intel_resources())
 		return 1;
 
+	if (intel_device_chip != INTEL_965)
+		if (!intel_wrong_chipset_warning())
+			return 1;
+
 	MMIO(0x700C0) = (1 << 28); /* cursor B to pipe B, 64x64 4-color */
 	MMIO(0x700C4) = 0;    
 	*(intel_hw_display_plane(DISPLAY_B,DISPLAY_PLANE_SURFACE_BASE_ADDRESS)) = 0;

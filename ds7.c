@@ -25,6 +25,10 @@ int main() {
 	if (!map_intel_resources())
 		return 1;
 
+	if (intel_device_chip != INTEL_965)
+		if (!intel_wrong_chipset_warning())
+			return 1;
+
 	/* enable hotplug detect */
 	MMIO(0x61110) = 0x00000000;
 	MMIO(0x61114) = ~0;

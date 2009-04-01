@@ -24,6 +24,10 @@ int main() {
 	if (!map_intel_resources())
 		return 1;
 
+	if (intel_device_chip != INTEL_965)
+		if (!intel_wrong_chipset_warning())
+			return 1;
+
 	{
 		unsigned int *p = (unsigned int*)fb_base;
 		unsigned int *f = p + 1280*800;

@@ -24,6 +24,10 @@ int main() {
 	if (!map_intel_resources())
 		return 1;
 
+	if (intel_device_chip != INTEL_965)
+		if (!intel_wrong_chipset_warning())
+			return 1;
+
 	/* play with the flat panel scaling stuff! */
 	MMIO(0x61230) = 0x80000000 | (1 << 29) | (1 << 26) | (0 << 24);
 	int x,y;

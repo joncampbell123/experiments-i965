@@ -25,6 +25,10 @@ int main() {
 	if (!map_intel_resources())
 		return 1;
 
+	if (intel_device_chip != INTEL_965)
+		if (!intel_wrong_chipset_warning())
+			return 1;
+
 	make_gradient_test_cursor_argb(fb_base + 0x400000);
 
 	MMIO(0x70080) = (1 << 28); /* cursor A to pipe B, 64x64 4-color */
