@@ -107,6 +107,13 @@ void start_ring() {
 void stop_ring() {
 	int i;
 
+	/* theory: my laptop's 855GM chipset eventually hangs because we shut off the ring buffer
+	 *         while it's on an odd DWORD address? */
+	if (intel_device_chip == INTEL_855) {
+		long long patience = 10000000;
+		while ((MMIO(0x203C) & 1) && (MMIO(0x2034) & 4) && patience-- > 0);
+	}
+
 	MMIO(0x203C) = 0x00000000;
 	MMIO(0x2030) = 0;					/* write RING_TAIL */
 	MMIO(0x2034) = 0;					/* write RING_HEAD */

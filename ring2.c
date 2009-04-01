@@ -33,9 +33,10 @@ int main() {
 	fprintf(stderr,"Booting 2D ringbuffer.\n");
 
 	/* insert no-ops that change NOPID. if the NOPID becomes the value we wrote, consider the test successful. */
+	srand(time(NULL));
 	uint32_t v = ((uint32_t)((rand()*rand()*rand()))) & 0x1FFFFF;
 	mi_noop_id(v);
-	fill_no_ops(1);
+	fill_no_ops(64);
 	ring_emit_finish();
 
 	int counter = 0;
@@ -56,7 +57,7 @@ int main() {
 		for (c=0;c <= cmax;c++) {	/* how many we can fill up before hitting the end of the ring */
 			mi_noop_id(c);
 		}
-		fill_no_ops(4);	/* 4 no-ops as landing area */
+		fill_no_ops(16);	/* 16 no-ops as landing area */
 		ring_emit_finish();
 
 		double fstart = frtime();
