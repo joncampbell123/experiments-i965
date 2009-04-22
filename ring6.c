@@ -19,6 +19,8 @@
 #include "util.h"
 #include "mmap.h"
 
+const int seizure_mode = 0;
+
 int main() {
 	iopl(3);
 
@@ -74,7 +76,8 @@ int main() {
 			y1 = cy + (cos(a) * 240);
 			x2 = cx + (sin(a*5) * 360);
 			y2 = cy + (cos(a*5) * 180);
-			if (intel_device_chip == INTEL_965)
+			if (seizure_mode) { }
+			else if (intel_device_chip == INTEL_965)
 				ring_emit((3 << 23) | (1 << 18)); /* pipe B: wait for HBLANK */
 			else
 				ring_emit((3 << 23) | (1 << 3)); /* pipe B: wait for HBLANK */
@@ -84,16 +87,16 @@ int main() {
 			mi_load_imm(0x70080,(1 << 28) | 0x20 | 3);
 			mi_load_imm(0x70088,(y2 << 16) | x2);
 			/* fun with the COLOR_BLIT */
-			color_blit_fill((1280*2*4)+(4*2), /* start at 2nd scan line */
-				160,120,	/* 640x480 block */
+			src_copy_blit(
+				(1280*2*1)+(1*2),	/* dest */
+				1200,700,	/* 320x240 block */
+				1280*2,		/* dest pitch */
+				(1280*2*2)+(0*2),	/* src */
+				1280*2);
+			color_blit_fill((1280*2*698)+(0*2), /* start at 2nd scan line */
+				1000,2,	/* 640x480 block */
 				1280*2,		/* pitch */
 				c);		/* what to fill with */
-			src_copy_blit(
-				(1280*2*4)+(170*2),	/* dest */
-				320,240,	/* 320x240 block */
-				1280*2,		/* dest pitch */
-				(1280*2*300)+(80*2),	/* src */
-				1280*2);
 			ring_emit_finish();
 			wait_ring_space(64);
 		}
