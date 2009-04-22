@@ -39,9 +39,9 @@ void mi_noop_id(uint32_t id) {
 void ring_emit_finish() {
 	/* enforce QWORD boundary */
 	if (ptr_to_fb(ring_tail) & 4) {
-		printf("ringbuffer: non-qword aligned emit finish @ 0x%08X, adding extra NOP\n",ptr_to_fb(ring_tail));
+//		printf("ringbuffer: non-qword aligned emit finish @ 0x%08X, adding extra NOP\n",ptr_to_fb(ring_tail));
 		ring_emit(MI_NOOP);
-		printf(" -> 0x%08X\n",ptr_to_fb(ring_tail));
+//		printf(" -> 0x%08X\n",ptr_to_fb(ring_tail));
 	}
 	MMIO(0x2030) = ptr_to_fb(ring_tail)-ptr_to_fb(ring_base);
 }
@@ -115,8 +115,11 @@ void color_blit_fill(uint32_t dest,int width,int height,int pitch,uint32_t val) 
 }
 
 void src_copy_blit(uint32_t dest,int dw,int dh,int dp,uint32_t src,int sp) {
+	uint32_t d1 = (1 << 24) | (0xCC << 16) | (dp & 0xFFFF);
+	if (intel_device_chip < INTEL_965)
+		d1 |= (1 << 26); /* My Intel 855GM based laptops demand this, apparently, or else this OP locks up the 2D blitter */
 	ring_emit((2 << 29) | (0x43 << 22) | (3 << 20) | 4);
-	ring_emit((1 << 24) | (0xCC << 16) | (dp & 0xFFFF));	/* SRCCOPY 16bpp 565 */
+	ring_emit(d1);	/* SRCCOPY 16bpp 565 */
 	ring_emit((dh << 16) | (dh * 2));
 	ring_emit(dest);
 	ring_emit(sp);

@@ -19,6 +19,8 @@
 #include "util.h"
 #include "mmap.h"
 
+const int seizure_mode = 0;	/* do not enable if any participants are epileptic :) */
+
 int main() {
 	iopl(3);
 
@@ -74,7 +76,8 @@ int main() {
 			y1 = cy + (cos(a) * 240);
 			x2 = cx + (sin(a*5) * 360);
 			y2 = cy + (cos(a*5) * 180);
-			if (intel_device_chip == INTEL_965)
+			if (seizure_mode) { }
+			else if (intel_device_chip == INTEL_965)
 				ring_emit((3 << 23) | (1 << 18)); /* pipe B: wait for HBLANK */
 			else
 				ring_emit((3 << 23) | (1 << 3)); /* pipe B: wait for HBLANK */
@@ -85,7 +88,7 @@ int main() {
 			mi_load_imm(0x70088,(y2 << 16) | x2);
 			/* fun with the COLOR_BLIT */
 			color_blit_fill((1280*2*4)+(4*2), /* start at 2nd scan line */
-				640,480,	/* 640x480 block */
+				1280,768,	/* 640x480 block */
 				1280*2,		/* pitch */
 				c);		/* what to fill with */
 			ring_emit_finish();
