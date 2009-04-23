@@ -1,0 +1,41 @@
+Intel page table control notes:
+
+* Most of their documentation regarding what address means what is confusing at first.
+  Until you understand that no, it really does mean physical memory offsets, though
+  in other cases "physical memory address" seems to refer to an address relative to
+  the framebuffer.
+
+* I somehow thought the framebuffer existed in VRAM entirely on it's own from system
+  RAM. WRONG. It really is stolen from the top of system memory.
+
+* Intel documentation seems to suggest that if you turn off paging, that VRAM is mapped
+  linearly like a normal framebuffer. WRONG. What happens is garbage on the screen.
+  So basically the only way you will get proper function is to basically leave the
+  page tables on at all times.
+
+  Once I realized this it didn't surprise me the VESA BIOS also uses the page tables
+  to set up a normal framebuffer for DOS programs.
+
+* Ah but of course, the page tables map the 8MB so that the last 128KB (containing the
+  page tables themselves) are mapped out (they only have the last page prior to that
+  repeated). I guess some naughty DOS programs tromp on that, eh?
+
+* You have to read far into Intel's docs to get this, but the address of the framebuffer
+  and other things sitting in "stolen" RAM are arranged like this: [example taken from Fujitsu laptop]
+            0x20000000      top of 512MB DDR RAM
+            0x1FF00000      "TSEG" (top 1MB segment for System Management Mode)
+            0x1FEE0000      framebuffer + 8MB - 128KB = where the VESA BIOS puts the graphics page tables
+            0x1F700000      framebuffer
+                                            ^ all of these addresses are mapped so that the CPU
+                                              cannot see them (unless its in SMM mode)
+-------------------------------------------------
+            0x00000000-0x1F6FFFFF = "system memory" visible to the CPU
+
+* Also not explained well: the page tables apply to the display of the VRAM itself. In other
+  words: your page tables affect the part of the hardware responsible for pulling video data
+  from memory and displaying it. So of course the first sign your page tables are wrong is a
+  scrambled display :) On the other hand it does make it possible to allocate some chunk of
+  memory from userspace, lock it into physical memory, and, regardless of how fragmented or
+  disordered those pages are, make it the display RAM you see on-screen. From userspace! And
+  you could remap as needed too :)
+
