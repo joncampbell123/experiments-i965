@@ -71,6 +71,8 @@ int main() {
 	if (!map_intel_resources())
 		return 1;
 
+	return 1;
+
 	disable_gtt();
 
 	/* and pick the 4MB mark for the GTT */
