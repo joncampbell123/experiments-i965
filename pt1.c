@@ -23,7 +23,9 @@
 
 const int seizure_mode = 0;
 
-uint32_t *GTT = NULL;
+int GTT_PAGES = 0;
+uint32_t GTT_OFFSET = 0;
+volatile uint32_t *GTT = NULL,*GTT_FENCE = NULL;
 
 int self_pagemap_fd = -1;
 int64_t virt2phys(void *p) {
@@ -48,6 +50,19 @@ int64_t virt2phys(void *p) {
 	return (u & ((1ULL << 56ULL) - 1ULL)) << 12;
 }
 
+#if 0
+uint32_t ptr_to_fb(volatile void *x) {
+	return (uint32_t)(((volatile unsigned char*)(x)) - fb_base);
+}
+#endif
+
+/* a buffer for the Graphics chip to blit from.
+ * we own it in CPU space, and if programmed correctly, the graphics chipset will blit from it perfectly */
+
+void disable_gtt() {
+	MMIO(0x2020) = 0;
+}
+
 int main() {
 	iopl(3);
 
@@ -56,42 +71,31 @@ int main() {
 	if (!map_intel_resources())
 		return 1;
 
-	/* allocate 256KB memory. hopefully, it's contiguous in memory (we check for that!) */
+	disable_gtt();
+
+	/* and pick the 4MB mark for the GTT */
+	GTT_OFFSET = (4UL << 20UL);
+	GTT = (volatile uint32_t*)(fb_base + GTT_OFFSET);
+	GTT_PAGES = (2UL << 20UL) >> 2UL;
+	GTT_FENCE = GTT + GTT_PAGES;	/* and we choose 2MB GTT */
+	/* make default map: first 8MB is mapped directly */
 	{
-		int ok = 0,patience = 10;
-		do {
-			if (--patience <= 0) {
-				printf("Unable to alloc phyisically contigious memory\n");
-				return 1;
-			}
-
-			int sz = 512*1024;
-			void *p = mmap(NULL,sz,PROT_READ|PROT_WRITE,MAP_ANONYMOUS|MAP_SHARED,-1,0);
-			if (p == ((void*)-1)) {
-				printf("mmap failed\n");
-				return 1;
-			}
-			if (mlock(p,sz) < 0) {
-				printf("mlock failed\n");
-				return 1;
-			}
-
-			if ((size_t)p & 0xFFF) {
-				printf("Whoops! mmap() not page aligned\n");
-				return 1;
-			}
-
-			int page;
-			for (page=0;page < (sz>>12);page++) {
-				void *np = (void*)(((char*)p) + (page << 12));
-				uint32_t pa = virt2phys(np);
-				printf("0x%08X -> 0x%08X\n",(size_t)np,pa);
-			}
-
-			ok = 1;
-		} while (!ok);
+		unsigned int page = 0;
+		for (page=0;page < GTT_PAGES;page++)
+			GTT[page] = ((page << 12UL) + GTT_OFFSET + fb_base_vis) | (0 << 1) | 1;	/* 1:1 mapping of pages, main memory (meaning graphics), valid */
+	}
+	/* set it */
+	{
+		uint32_t align = (GTT_PAGES << 2UL);
+		if (align & (align - 1) == 0) { printf("0x%08X not power of 2\n",align); return 1; }
+		uint32_t ofs = GTT_OFFSET;
+		if ((ofs & align) != 0) { printf("0x%08X not aligned\n",ofs); return 1; }
+		if ((ofs & 0xFFF) != 0) { printf("0x%08X not page aligned\n",ofs); return 1; }
+		MMIO(0x2020) = (ofs + fb_base_vis) | (4 << 1) | 1;	/* offset, 2MB GTT, enabled */
 	}
 
+	usleep(500000);
+	disable_gtt();
 	return 1;
 
 	/* I pick the 2MB mark for the ring buffer. Use larger space for speed tests, about slightly less than 2MB */
@@ -169,6 +173,7 @@ int main() {
 	}
 
 	stop_ring();
+	disable_gtt();
 	unmap_intel_resources();
 	return 0;
 }
