@@ -180,6 +180,7 @@ int main() {
 		printf("Cannot lock bitmap\n");
 		return 1;
 	}
+	memset(sub_bitmap,0x55,640*480*2);
 
 	uint32_t sub_bitmap_fb_ofs;
 	/* set up a third and final page table to enable blitting from host memory like we want */
@@ -187,7 +188,7 @@ int main() {
 	volatile uint32_t *GTT = (volatile uint32_t*)((char*)fb_base + gtt_fb_ofs);
 	{
 		int page,c;
-		for (page=0;page < ((1280*768*2) >> 12);page++)
+		for (page=0;page < (0x500000 >> 12);page++)
 			GTT[page] = (framebuffer_addr + (page << 12UL)) | 1;
 
 		sub_bitmap_fb_ofs = page << 12U;
@@ -195,6 +196,8 @@ int main() {
 			GTT[page] = virt2phys(((char*)sub_bitmap) + (page << 12ULL)) | (3 << 1) | 1;
 	}
 	MMIO(0x2020) = (framebuffer_addr + gtt_fb_ofs) | 1;
+
+	sleep(5);
 
 	printf("sub bitmap bound to 0x%08X\n",sub_bitmap_fb_ofs);
 
@@ -227,7 +230,7 @@ int main() {
 	 * to avoid a race with the 2D ring we stop the ring, fill with commands, then start it again. */
 	stop_ring();
 	{
-		unsigned int c,cmax=1000000;
+		unsigned int c,cmax=1000;
 		/* prep the cursors */
 		mi_load_imm(0x70080,1 << 28);
 		mi_load_imm(0x700C0,1 << 28);
@@ -265,7 +268,7 @@ int main() {
 			ring_emit_finish();
 			wait_ring_space(64);
 		}
-		wait_ring_space((ring_size>>2)-16);
+		wait_ring_space((ring_size>>2)-128);
 	}
 
 	stop_ring();
