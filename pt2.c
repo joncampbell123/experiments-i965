@@ -23,7 +23,7 @@
 
 #include <asm/mtrr.h>
 
-const int seizure_mode = 0;
+const int seizure_mode = 1;
 
 int mtrr_fd = -1;
 
@@ -197,8 +197,6 @@ int main() {
 	}
 	MMIO(0x2020) = (framebuffer_addr + gtt_fb_ofs) | 1;
 
-	sleep(5);
-
 	printf("sub bitmap bound to 0x%08X\n",sub_bitmap_fb_ofs);
 
 	/* I pick the 2MB mark for the ring buffer. Use larger space for speed tests, about slightly less than 2MB */
@@ -230,7 +228,7 @@ int main() {
 	 * to avoid a race with the 2D ring we stop the ring, fill with commands, then start it again. */
 	stop_ring();
 	{
-		unsigned int c,cmax=1000;
+		unsigned int c,cmax=0;
 		/* prep the cursors */
 		mi_load_imm(0x70080,1 << 28);
 		mi_load_imm(0x700C0,1 << 28);

@@ -57,6 +57,10 @@ void set_ring_area(uint32_t base,uint32_t size) {
 	stop_ring();
 	usleep(10000);
 
+	/* force error conditions off */
+	MMIO(0x20B0) = ~0;
+	MMIO(0x20B4) = ~0;
+
 	/* WARNING: size must be multiple of 4096 */
 	ring_size = (size + 4095) & (~4095);
 	ring_base = (volatile uint32_t*)(fb_base + base);
