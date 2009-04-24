@@ -52,48 +52,6 @@ uint32_t gtt_sizes[8] = {
 	0
 };
 
-int pcicfg_fd = -1;
-
-int open_intel_pcicfg(const char *dev) {
-	char path[256];
-	sprintf(path,"/sys/bus/pci/devices/%s/config",dev); // sysfs_intel_graphics_dev);
-	printf("Opening PCI config space: %s\n",path);
-	if ((pcicfg_fd = open(path,O_RDWR)) < 0) return 0;
-	return 1;
-}
-
-int close_intel_pcicfg() {
-	if (pcicfg_fd >= 0) close(pcicfg_fd);
-	pcicfg_fd = -1;
-	return 0;
-}
-
-uint8_t intel_pcicfg_u8(uint32_t o) {
-	uint8_t a=~0;
-	lseek(pcicfg_fd,o,SEEK_SET);
-	read(pcicfg_fd,&a,1);
-	return a;
-}
-
-void intel_pcicfg_u8_write(uint32_t o,uint8_t c) {
-	lseek(pcicfg_fd,o,SEEK_SET);
-	write(pcicfg_fd,&c,1);
-}
-
-uint16_t intel_pcicfg_u16(uint32_t o) {
-	uint16_t a=~0;
-	lseek(pcicfg_fd,o,SEEK_SET);
-	read(pcicfg_fd,&a,2);
-	return a;
-}
-
-uint32_t intel_pcicfg_u32(uint32_t o) {
-	uint32_t a=~0;
-	lseek(pcicfg_fd,o,SEEK_SET);
-	read(pcicfg_fd,&a,4);
-	return a;
-}
-
 int main() {
 	iopl(3);
 

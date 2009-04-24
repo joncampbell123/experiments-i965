@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <math.h>
 
 #include <sys/mman.h>
@@ -27,31 +28,33 @@ const int seizure_mode = 0;
 
 int mtrr_fd = -1;
 
-int GTT_PAGES = 0;
-uint32_t GTT_OFFSET = 0;
-volatile uint32_t *GTT = NULL,*GTT_FENCE = NULL;
+void mtrr_init_entry(struct mtrr_sentry *se) {
+	memset(se,0,sizeof(*se));
+}
 
-int self_pagemap_fd = -1;
-int64_t virt2phys(void *p) {
-	if (self_pagemap_fd < 0)
-		self_pagemap_fd = open("/proc/self/pagemap",O_RDONLY);
-	if (self_pagemap_fd < 0)
-		return -1LL;
+void mtrr_set(struct mtrr_sentry *se,size_t base,size_t size,int type) {
+	se->base = base;
+	se->size = size;
+	se->type = type;
+}
 
-	uint64_t u;
-	unsigned int virt = (unsigned int)p;
-	unsigned int ofs = (virt >> 12) << 3;
-	if (lseek(self_pagemap_fd,ofs,SEEK_SET) != ofs)
-		return -1LL;
-	if (read(self_pagemap_fd,&u,8) != 8)
-		return -1LL;
+int mtrr_add(struct mtrr_sentry *se) {
+	return ioctl(mtrr_fd,MTRRIOC_ADD_ENTRY,&se);
+}
 
-	if (!(u & (1ULL << 63ULL)))
-		return -1LL;	/* not present */
-	if (u & (1ULL << 62LL))
-		return -1LL;	/* swapped out */
+int mtrr_del(struct mtrr_sentry *se) {
+	return ioctl(mtrr_fd,MTRRIOC_DEL_ENTRY,&se);
+}
 
-	return (u & ((1ULL << 56ULL) - 1ULL)) << 12;
+int mtrr_init() {
+	if (mtrr_fd >= 0) return 1;
+	if ((mtrr_fd = open("/proc/mtrr",O_RDWR)) < 0) return 0;
+	return 1;
+}
+
+void mtrr_close() {
+	if (mtrr_fd >= 0) close(mtrr_fd);
+	mtrr_fd = -1;
 }
 
 int main() {
@@ -61,12 +64,18 @@ int main() {
 		return 1;
 	if (!map_intel_resources())
 		return 1;
-
-	if ((mtrr_fd = open("/proc/mtrr",O_RDWR)) < 0) {
+	if (!mtrr_init()) {
 		printf("Cannot open MTRRs\n");
 		return 1;
 	}
+#if 0
+	if (!open_intel_pcicfg(sysfs_intel_graphics_dev)) {
+		printf("Cannot open PCI config space\n");
+		return 1;
+	}
+#endif
 
+#if 0 /* Intel 855GM */
 	/* TODO: ask an intel chipset where the actual top of memory is,
 	 *       or else guess from Linux /proc/mem and round up. */
 	uint32_t top_of_memory = (512U << 20U);
@@ -79,11 +88,52 @@ int main() {
 	printf("Stolen = 0x%08X\n",stolen);
 	uint32_t framebuffer_addr = TSEG - stolen;
 	printf("framebuffer (DRAM physical) = 0x%08X\n",framebuffer_addr);
+#endif
+#if 1 /* Intel 965 */
+	/* Intel seems to have better documentation on this than the 855
+	 * I was testing against */
+
+	/* we need PCI configuration access */
+	if (!open_intel_pcicfg("0000:00:00.0")) {
+		printf("Cannot open host bridge config space\n");
+		return 1;
+	}
+	uint32_t top_of_memory = intel_pcicfg_u16(0xA0) << 27;
+	printf("top of memory = 0x%08X (%dMB)\n",top_of_memory,top_of_memory>>20);
+	uint32_t tolud = intel_pcicfg_u16(0xB0) << 16;
+	printf("top of usable dram = 0x%08X\n",tolud);
+	close_intel_pcicfg();
+
+	if (!open_intel_pcicfg("0000:00:02.0")) {
+		printf("Cannot open VGA config space\n");
+		return 1;
+	}
+
+	uint32_t top_of_stolen_memory = intel_pcicfg_u32(0x5C);
+	printf("Top of stolen = 0x%08X\n",top_of_stolen_memory);
+
+	uint32_t ctrl_info = intel_pcicfg_u16(0x52);
+	static uint32_t stolt[8] = {
+		0,
+		1UL << 20UL,
+		4UL << 20UL,
+		8UL << 20UL,
+		16UL << 20UL,
+		32UL << 20UL,
+		48UL << 20UL,
+		64UL << 20UL
+	};
+
+	uint32_t stolen = stolt[(ctrl_info >> 4) & 7];
+	printf("Stolen = 0x%08X\n",stolen);
+	uint32_t framebuffer_addr = top_of_stolen_memory;
+	printf("framebuffer (DRAM physical) = 0x%08X\n",framebuffer_addr);
+#endif
 
 	/* conveniently, we can also assume Intel 855GM VESA BIOS behavior of sticking the page tables IT made at the
 	 * end of the framebuffer area */
 	/* TODO: get the page tables size */
-	uint32_t page_tables_size = 128U << 10U;
+	uint32_t page_tables_size = 512U << 10U; /* 512KB */
 	uint32_t vesa_bios_page_tables = framebuffer_addr + stolen - page_tables_size;
 	printf("VESA BIOS page tables = 0x%08X\n",vesa_bios_page_tables);
 
@@ -94,7 +144,7 @@ int main() {
 	volatile uint32_t *step1 = mmap(NULL,4096,PROT_READ|PROT_WRITE,MAP_ANONYMOUS|MAP_SHARED,-1,0);
 	volatile uint32_t *step2;
 	{
-		if (step1 == ((uint32_t*)-1)) {
+		if (step1 == ((volatile uint32_t*)-1)) {
 			printf("Cannot mmap 4K\n");
 			return 1;
 		}
@@ -102,26 +152,25 @@ int main() {
 			printf("Cannot mlock page into memory\n");
 			return 1;
 		}
-		uint32_t step1_cpuaddr = (uint32_t)virt2phys((void*)step1);
-		if (step1_cpuaddr == ~0) {
+		size_t step1_cpuaddr = (size_t)virt2phys((void*)step1);
+		if (step1_cpuaddr == ~(0ULL)) {
 			printf("Cannot translate to physical CPU addr\n");
 			return 1;
 		}
 
 		printf("Step1 page:\n");
-		printf("    Virtual: 0x%08X\n",(uint32_t)step1);
-		printf("    Physical: 0x%08X\n",step1_cpuaddr);
+		printf("    Virtual: 0x%08lX\n",(size_t)step1);
+		printf("    Physical: 0x%08lX\n",step1_cpuaddr);
 
 		/* use the MTRRs to make our page uncacheable to ensure that the damn processor
 		 * get the data out there the instant we write it. if we don't the processor will
 		 * take it's sweet lazy time and you'll see it in the form of a screen full of
 		 * garbage that slowly builds up over time (as the CPU flushes, of course!) */
 		struct mtrr_sentry se;
-		memset(&se,0,sizeof(se));
-		se.base = step1_cpuaddr;
-		se.size = 4096;
-		if (ioctl(mtrr_fd,MTRRIOC_ADD_ENTRY,&se) < 0) {
-			printf("Cannot add MTRR entry\n");
+		mtrr_init_entry(&se);
+		mtrr_set(&se,step1_cpuaddr,4096,MTRR_TYPE_UNCACHABLE);
+		if (mtrr_add(&se) < 0) {
+			printf("Cannot add MTRR entry %s\n",strerror(errno));
 			return 1;
 		}
 
@@ -142,7 +191,7 @@ int main() {
 		for (;page < 1024;page++)
 			step1[page] = framebuffer_addr | 1;
 
-		if (ioctl(mtrr_fd,MTRRIOC_DEL_ENTRY,&se) < 0)
+		if (mtrr_del(&se) < 0)
 			printf("Warning: cannot kill MTRR entry\n");
 
 		MMIO(0x2020) = step1_cpuaddr | 1;
@@ -164,7 +213,7 @@ int main() {
 	MMIO(0x2020) = vesa_bios_page_tables | 1;
 
 	unmap_intel_resources();
-	close(mtrr_fd); mtrr_fd = -1;
+	mtrr_close();
 	return 0;
 }
 
