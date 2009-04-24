@@ -133,7 +133,7 @@ int main() {
 	/* conveniently, we can also assume Intel 855GM VESA BIOS behavior of sticking the page tables IT made at the
 	 * end of the framebuffer area */
 	/* TODO: get the page tables size */
-	uint32_t page_tables_size = 512U << 10U; /* 512KB */
+	uint32_t page_tables_size = 128U << 10U; /* 512KB */
 	uint32_t vesa_bios_page_tables = framebuffer_addr + stolen - page_tables_size;
 	printf("VESA BIOS page tables = 0x%08X\n",vesa_bios_page_tables);
 
@@ -166,6 +166,7 @@ int main() {
 		 * get the data out there the instant we write it. if we don't the processor will
 		 * take it's sweet lazy time and you'll see it in the form of a screen full of
 		 * garbage that slowly builds up over time (as the CPU flushes, of course!) */
+#if 0
 		struct mtrr_sentry se;
 		mtrr_init_entry(&se);
 		mtrr_set(&se,step1_cpuaddr,4096,MTRR_TYPE_UNCACHABLE);
@@ -173,6 +174,7 @@ int main() {
 			printf("Cannot add MTRR entry %s\n",strerror(errno));
 			return 1;
 		}
+#endif
 
 		int fb_pages = (1280*768*2)>>12,c;
 		for (page=0;page < fb_pages;page++)
@@ -191,8 +193,10 @@ int main() {
 		for (;page < 1024;page++)
 			step1[page] = framebuffer_addr | 1;
 
+#if 0
 		if (mtrr_del(&se) < 0)
 			printf("Warning: cannot kill MTRR entry\n");
+#endif
 
 		MMIO(0x2020) = step1_cpuaddr | 1;
 
