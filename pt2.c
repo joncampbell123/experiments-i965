@@ -54,6 +54,9 @@ int64_t virt2phys(void *p) {
 	return (u & ((1ULL << 56ULL) - 1ULL)) << 12;
 }
 
+/* our sub-bitmap! */
+volatile uint16_t *sub_bitmap = NULL;
+
 int main() {
 	iopl(3);
 
@@ -161,7 +164,39 @@ int main() {
 			step2[page] = (framebuffer_addr + ((map_pages-1) << 12UL)) | 1;
 	}
 
+	/* make that one active so we have our sanity */
 	MMIO(0x2020) = vesa_bios_page_tables | 1;
+
+	/* we can let go the 4K page now */
+	munmap((void*)step1,4096);
+
+	/* alloc subbitmap */
+	sub_bitmap = (volatile uint16_t*)mmap(NULL,640*480*2,PROT_READ|PROT_WRITE,MAP_ANONYMOUS|MAP_SHARED,-1,0);
+	if (sub_bitmap == (void*)-1) {
+		printf("Cannot alloc shared bitmap\n");
+		return 1;
+	}
+	if (mlock((void*)sub_bitmap,640*480*2) < 0) {
+		printf("Cannot lock bitmap\n");
+		return 1;
+	}
+
+	uint32_t sub_bitmap_fb_ofs;
+	/* set up a third and final page table to enable blitting from host memory like we want */
+	uint32_t gtt_fb_ofs = 0x500000;
+	volatile uint32_t *GTT = (volatile uint32_t*)((char*)fb_base + gtt_fb_ofs);
+	{
+		int page,c;
+		for (page=0;page < ((1280*768*2) >> 12);page++)
+			GTT[page] = (framebuffer_addr + (page << 12UL)) | 1;
+
+		sub_bitmap_fb_ofs = page << 12U;
+		for (c=0;c < ((640*480*2)>>12);c++,page++)
+			GTT[page] = virt2phys(((char*)sub_bitmap) + (page << 12ULL)) | (3 << 1) | 1;
+	}
+	MMIO(0x2020) = (framebuffer_addr + gtt_fb_ofs) | 1;
+
+	printf("sub bitmap bound to 0x%08X\n",sub_bitmap_fb_ofs);
 
 	/* I pick the 2MB mark for the ring buffer. Use larger space for speed tests, about slightly less than 2MB */
 	set_ring_area(0x200000,2040*1024);
@@ -220,17 +255,13 @@ int main() {
 			mi_load_imm(0x700C8,(y1 << 16) | x1);
 			mi_load_imm(0x70080,(1 << 28) | 0x20 | 3);
 			mi_load_imm(0x70088,(y2 << 16) | x2);
-			/* fun with the COLOR_BLIT */
+			/* blit from host memory */
 			src_copy_blit(
-				(1280*2*1)+(1*2),	/* dest */
-				1200,700,	/* 320x240 block */
+				0,	/* dest */
+				640,480,	/* 320x240 block */
 				1280*2,		/* dest pitch */
-				(1280*2*2)+(0*2),	/* src */
-				1280*2);
-			color_blit_fill((1280*2*698)+(0*2), /* start at 2nd scan line */
-				1000,2,	/* 640x480 block */
-				1280*2,		/* pitch */
-				c);		/* what to fill with */
+				sub_bitmap_fb_ofs,	/* src */
+				640*2);
 			ring_emit_finish();
 			wait_ring_space(64);
 		}
@@ -238,6 +269,7 @@ int main() {
 	}
 
 	stop_ring();
+	MMIO(0x2020) = vesa_bios_page_tables | 1;
 	unmap_intel_resources();
 	close(mtrr_fd); mtrr_fd = -1;
 	return 0;

@@ -1,4 +1,4 @@
-all: ds1 ds2 ds3 ds4 ds5 ds6 ds7 ds8 ds9 ring1 ring2 ring3 ring4 ring5 ring6 pt1 ptdump
+all: ds1 ds2 ds3 ds4 ds5 ds6 ds7 ds8 ds9 ring1 ring2 ring3 ring4 ring5 ring6 pt1 pt2 ptdump
 
 INTEL_OBJS=find_intel.o util.o mmap.o intelfbhw.o
 RINGBUFFER=ringbuffer.o
@@ -10,6 +10,8 @@ clean:
 	gcc -c -o $@ $<
 
 pt1: pt1.o $(INTEL_OBJS)
+	gcc -o $@ $< $(INTEL_OBJS) $(RINGBUFFER) -lm
+pt2: pt2.o $(INTEL_OBJS)
 	gcc -o $@ $< $(INTEL_OBJS) $(RINGBUFFER) -lm
 ds1: ds1.o $(INTEL_OBJS)
 	gcc -o $@ $< $(INTEL_OBJS)
