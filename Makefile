@@ -4,7 +4,7 @@ INTEL_OBJS=find_intel.o util.o mmap.o intelfbhw.o
 RINGBUFFER=ringbuffer.o
 
 clean:
-	rm -f ds? ring?
+	rm -f ds? ring? *.o
 
 .c.o:
 	gcc -c -o $@ $<
