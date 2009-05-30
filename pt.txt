@@ -39,3 +39,14 @@ Intel page table control notes:
   disordered those pages are, make it the display RAM you see on-screen. From userspace! And
   you could remap as needed too :)
 
+Update 2009-05-28:
+  Page table code removed. Directly manipulating it from userspace is unsafe, not because
+  of the page tables but because most of what userspace gets is memory mapped in a cached
+  manner, which is a bad thing when the hardware is reading from a different part of the
+  circuit that may not have gotten the writes to it's page tables yet. Overall, the code
+  was good for some tests and overall system instability, but that's it. The recommended
+  way to play with page tables now is through the k_tvbox_i8xx kernel driver that Jon
+  wrote. This driver uses what it can in kernelspace to safely map the page tables in
+  uncached mode, autodetects the stolen memory area, detects the chipset, and provides
+  safe fallbacks to restore normal framebuffer operation (things that userspace cannot do).
+
