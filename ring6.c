@@ -58,6 +58,8 @@ void close_i8xx_pgtable() {
 }
 
 int open_i8xx_pgtable() {
+	int x;
+
 	if (i8xx_pgtable_fd >= 0)
 		return 1;
 
@@ -80,6 +82,10 @@ int open_i8xx_pgtable() {
 		close_i8xx_pgtable();
 		return 0;
 	}
+
+	/* whatever's there, force it to flush, so weird things don't happen */
+	for (x=0;x < i8xx_pgtable_size;x += 16)
+		_mm_clflush((void const*)((char*)i8xx_pgtable+x));
 
 	printf("Pgtable driver, %luKB @ 0x%08lX\n",(unsigned long)(i8xx_info.pgtable_size >> 10UL),(unsigned long)i8xx_info.pgtable_base);
 	return 1;
@@ -223,25 +229,12 @@ int main() {
 		start_ring();
 		/* animate */
 		for (c=0;!DIE && c <= cmax;c++) {	/* how many we can fill up before hitting the end of the ring */
-			int x1,x2,y1,y2;
-			int cx = 640,cy = 360;
-			double a = (((double)c) * 6.28) / 1000;
-			x1 = cx + (sin(a) * 480);
-			y1 = cy + (cos(a) * 240);
-			x2 = cx + (sin(a*5) * 360);
-			y2 = cy + (cos(a*5) * 180);
 			if (seizure_mode) { }
 			else if (intel_device_chip == INTEL_965)
 				ring_emit((3 << 23) | (1 << 18)); /* pipe B: wait for HBLANK */
 			else
 				ring_emit((3 << 23) | (1 << 3)); /* pipe B: wait for HBLANK */
 
-#if 0
-			mi_load_imm(0x700C0,(1 << 28) | 0x20 | 3);
-			mi_load_imm(0x700C8,(y1 << 16) | x1);
-			mi_load_imm(0x70080,(1 << 28) | 0x20 | 3);
-			mi_load_imm(0x70088,(y2 << 16) | x2);
-#endif
 			/* fun with the COLOR_BLIT */
 			src_copy_blit(
 				(screen_width*2*1)+(1*2),	/* dest */
@@ -265,7 +258,6 @@ int main() {
 				(8UL << 20ULL)+(512*2*sypan),		/* src @ 16MB mark */
 				512*2);
 			ring_emit_finish();
-			wait_ring_space(64);
 
 			{
 				int x,y;
@@ -277,11 +269,17 @@ int main() {
 				for (x=0;x < 512*512;x += 16)
 					_mm_clflush((void const*)(pbuf+x));
 			}
+
+			wait_ring_space(256);
 		}
 /*		wait_ring_space((ring_size>>2)-16); */
 	}
 
-	while (!DIE);
+	while (!DIE) {
+		/* Intel 855GM we have to do this or else the chipset runs out and hangs */
+		fill_no_ops(128);
+		wait_ring_space(256);
+	}
 
 	stop_ring();
 	restore_i8xx_pgtable();
