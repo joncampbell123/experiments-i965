@@ -28,6 +28,7 @@ void set_ring_area(uint32_t base,uint32_t size);
 void mi_load_imm(uint32_t what,uint32_t with);
 void color_blit_fill(uint32_t dest,int width,int height,int pitch,uint32_t val);
 void src_copy_blit(uint32_t dest,int dw,int dh,int dp,uint32_t src,int sp);
+void mi_store_data_index_u64(unsigned int idx,uint64_t value);
 void mi_store_data_index(unsigned int idx,uint32_t value);
 void wait_ring_space(unsigned int x);
 void start_ring();

@@ -152,3 +152,13 @@ void mi_store_data_index(unsigned int idx,uint32_t value) {
 	ring_emit(value);
 }
 
+void mi_store_data_index_u64(unsigned int idx,uint64_t value) {
+	ring_emit(
+		(0    << 29) |	/* MI_COMMAND */
+		(0x21 << 23) |	/* MI_STORE_DATA_INDEX */
+		(2         ));	/* QWORD */
+	ring_emit(idx << 2);
+	ring_emit((uint32_t)value);
+	ring_emit((uint32_t)(value >> 32ULL));
+}
+
