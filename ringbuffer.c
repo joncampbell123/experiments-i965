@@ -191,3 +191,10 @@ void mi_store_data_imm_u64(unsigned int gtt,unsigned long addr,uint64_t value) {
 	ring_emit((uint32_t)(value >> 32ULL));
 }
 
+void mi_report_head(void) {
+	ring_emit(
+		(0    << 29) |	/* MI_COMMAND */
+		(0x07 << 23) |	/* MI_REPORT_HEAD */
+		0);
+}
+

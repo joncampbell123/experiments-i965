@@ -36,6 +36,7 @@ void mi_store_data_index(unsigned int idx,uint32_t value);
 void mi_store_data_imm(unsigned int gtt,unsigned long addr,uint32_t value);
 void mi_store_data_imm_u64(unsigned int gtt,unsigned long addr,uint64_t value);
 void wait_ring_space(unsigned int x);
+void mi_report_head(void);
 void start_ring();
 void stop_ring();
 
