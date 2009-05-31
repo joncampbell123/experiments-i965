@@ -143,3 +143,12 @@ void wait_ring_space(unsigned int x) {
 	} while (1);
 }
 
+void mi_store_data_index(unsigned int idx,uint32_t value) {
+	ring_emit(
+		(0    << 29) |	/* MI_COMMAND */
+		(0x21 << 23) |	/* MI_STORE_DATA_INDEX */
+		(1         ));	/* DWORD */
+	ring_emit(idx << 2);
+	ring_emit(value);
+}
+

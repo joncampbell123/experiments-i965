@@ -31,6 +31,7 @@
 extern int i8xx_pgtable_fd;
 extern struct tvbox_i8xx_info i8xx_info;
 extern volatile uint32_t *i8xx_pgtable;
+extern volatile uint32_t *i8xx_hwst;
 extern int i8xx_pgtable_size;
 
 void restore_i8xx_pgtable();

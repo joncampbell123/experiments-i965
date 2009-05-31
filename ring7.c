@@ -47,6 +47,24 @@ int main() {
 
 	fprintf(stderr,"Booting 2D ringbuffer.\n");
 
+	/* for debugging purposes, print contents of h/w status */
+	if (i8xx_hwst == NULL) {
+		fprintf(stderr,"Driver did not provide h/w status page\n");
+		return 1;
+	}
+
+	printf("H/W status:\n");
+	{
+		int x,y;
+		for (x=0;x < 0x80;x += 4) {
+			printf("0x%04lX  ",(unsigned long)x);
+			for (y=0;y < 4;y++) {
+				printf("0x%08lX ",(unsigned long)i8xx_hwst[x+y]);
+			}
+			printf("\n");
+		}
+	}
+
 	/* insert no-ops that change NOPID. if the NOPID becomes the value we wrote, consider the test successful. */
 	uint32_t v = ((uint32_t)((rand()*rand()*rand()))) & 0x1FFFFF;
 	mi_noop_id(v);
@@ -69,10 +87,18 @@ int main() {
 	 * to avoid a race with the 2D ring we stop the ring, fill with commands, then start it again. */
 	stop_ring();
 	{
-		unsigned int c,cmax=500;
+		unsigned int c,cmax=5000;
+		for (c=16;c < 1024;c++)
+			i8xx_hwst[c] = 0;
+
 		for (c=0;c <= cmax;c++) {	/* how many we can fill up before hitting the end of the ring */
-			ring_emit((3 << 23) | (1 << 18)); /* pipe B: wait for VBLANK */
-			mi_noop_id(c);
+			mi_store_data_index(16+(c%(1024-16)),c+1);
+
+			if (intel_device_chip == INTEL_965)
+				ring_emit((3 << 23) | (1 << 18)); /* pipe B: wait for HBLANK */
+			else
+				ring_emit((3 << 23) | (1 << 3)); /* pipe B: wait for HBLANK */
+
 		}
 		fill_no_ops(4);	/* 4 no-ops as landing area */
 		ring_emit_finish();
@@ -81,21 +107,30 @@ int main() {
 		double upd = fstart;
 		unsigned int lnop,county=0;
 		start_ring(); /* GO! */
-		while (!DIE && (lnop = read_nopid()) != cmax) {
-			if (++county >= 10000) {
-				county -= 10000;
-				double cr = frtime();
-				if (cr >= (upd+0.5)) {
-					printf("%u/%u\n",lnop,cmax);
-					upd = cr;
-				}
-			}
-		}
-		double fstop = frtime();
+	}
 
-		double duration = fstop-fstart;
-		fprintf(stderr,"Ring buffer ran through %u MI_NOOP commands in %.6f seconds\n",cmax,duration);
-		fprintf(stderr,"That's %.3f instructions/sec\n",((double)cmax)/duration);
+	printf("Tracking H/W status writes I just emitted.\n");
+	{
+		int index = 16,count=5000;
+		unsigned int value = 1;
+
+		while (count-- > 0) {
+			while (i8xx_hwst[index] == 0);
+			printf("\x0D" "%d: 0x%08lX      ",index,i8xx_hwst[index]);
+			fflush(stdout);
+
+			if (i8xx_hwst[index] != value) {
+				printf("FAIL!\n");
+				return 1;
+			}
+
+			/* reset value */
+			i8xx_hwst[index] = 0;
+
+			value++;
+			if (++index >= 1024)
+				index = 16;
+		}
 	}
 
 	stop_ring();
