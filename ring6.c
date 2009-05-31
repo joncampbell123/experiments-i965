@@ -7,6 +7,8 @@
 #include <errno.h>
 #include <math.h>
 
+#include <linux/fb.h>
+
 #include <xmmintrin.h>
 
 #include <sys/mman.h>
@@ -211,6 +213,19 @@ int main() {
 
 	int screen_width = 1280;
 	int screen_height = 768;
+
+	{
+		int fd = open("/dev/fb0",O_RDWR);
+		if (fd < 0) return 1;
+
+		struct fb_var_screeninfo vi;
+		if (ioctl(fd,FBIOGET_VSCREENINFO,&vi) < 0)
+			return 1;
+
+		screen_width = vi.xres;
+		screen_height = vi.yres;
+		close(fd);
+	}
 
 	/* now fill with no-ops and see how fast it really goes.
 	 * this time we tell it to wait for vblank, so the pipeline will be waiting around a lot.
