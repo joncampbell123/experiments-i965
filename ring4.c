@@ -59,10 +59,10 @@ int main() {
 		int stride = *(intel_hw_display_plane(DISPLAY_B,DISPLAY_PLANE_STRIDE));
 		unsigned int c,cmax=10000;
 		/* prep the cursors */
-		mi_load_imm(0x70080,1 << 28);
-		mi_load_imm(0x700C0,1 << 28);
-		mi_load_imm(0x70084,0x400000);
-		mi_load_imm(0x700C4,0x400000);
+		mi_load_register_imm(0x70080,1 << 28);
+		mi_load_register_imm(0x700C0,1 << 28);
+		mi_load_register_imm(0x70084,0x400000);
+		mi_load_register_imm(0x700C4,0x400000);
 		/* animate */
 		for (c=0;c <= cmax;c++) {	/* how many we can fill up before hitting the end of the ring */
 			int x1,x2,y1,y2;
@@ -77,14 +77,14 @@ int main() {
 			else /* this works on my 855GM based laptop */
 				ring_emit((3 << 23) | (1 << 3)); /* pipe B: wait for VBLANK */
 
-			mi_load_imm(0x700C0,(1 << 28) | 0x20 | 3);
-			mi_load_imm(0x700C8,(y1 << 16) | x1);
-			mi_load_imm(0x70080,(1 << 28) | 0x20 | 3);
-			mi_load_imm(0x70088,(y2 << 16) | x2);
+			mi_load_register_imm(0x700C0,(1 << 28) | 0x20 | 3);
+			mi_load_register_imm(0x700C8,(y1 << 16) | x1);
+			mi_load_register_imm(0x70080,(1 << 28) | 0x20 | 3);
+			mi_load_register_imm(0x70088,(y2 << 16) | x2);
 			int py = c&255;
 			if (py & 128) py = 256 - py;
-			mi_load_imm(0x71184,py*stride);
-			mi_load_imm(0x7119C,0);
+			mi_load_register_imm(0x71184,py*stride);
+			mi_load_register_imm(0x7119C,0);
 			mi_noop_id(c);
 		}
 		fill_no_ops(4);	/* 4 no-ops as landing area */

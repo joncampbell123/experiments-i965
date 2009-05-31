@@ -104,7 +104,7 @@ volatile uint32_t read_nopid() {
 	return MMIO(0x2094);
 }
 
-void mi_load_imm(uint32_t what,uint32_t with) {
+void mi_load_register_imm(uint32_t what,uint32_t with) {
 	ring_emit((0x22 << 23) | 1);	/* MI_LOAD_REGISTER_IMM with 1 DWORD and all byte enables on */
 	ring_emit(what);
 	ring_emit(with);

@@ -139,12 +139,12 @@ int main() {
 	{
 		unsigned int c,cmax=1000000;
 		/* prep the cursors */
-		mi_load_imm(0x70080,1 << 28);
-		mi_load_imm(0x700C0,1 << 28);
-		mi_load_imm(0x70084,0x400000);
-		mi_load_imm(0x700C4,0x400000);
-		mi_load_imm(0x71184,0);
-		mi_load_imm(0x7119C,0);
+		mi_load_register_imm(0x70080,1 << 28);
+		mi_load_register_imm(0x700C0,1 << 28);
+		mi_load_register_imm(0x70084,0x400000);
+		mi_load_register_imm(0x700C4,0x400000);
+		mi_load_register_imm(0x71184,0);
+		mi_load_register_imm(0x7119C,0);
 		start_ring();
 		/* animate */
 		for (c=0;!DIE && c <= cmax;c++) {	/* how many we can fill up before hitting the end of the ring */

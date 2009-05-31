@@ -60,12 +60,12 @@ int main() {
 	{
 		unsigned int c,cmax=1000000;
 		/* prep the cursors */
-		mi_load_imm(0x70080,1 << 28);
-		mi_load_imm(0x700C0,1 << 28);
-		mi_load_imm(0x70084,0x400000);
-		mi_load_imm(0x700C4,0x400000);
-		mi_load_imm(0x71184,0);
-		mi_load_imm(0x7119C,0);
+		mi_load_register_imm(0x70080,1 << 28);
+		mi_load_register_imm(0x700C0,1 << 28);
+		mi_load_register_imm(0x70084,0x400000);
+		mi_load_register_imm(0x700C4,0x400000);
+		mi_load_register_imm(0x71184,0);
+		mi_load_register_imm(0x7119C,0);
 		start_ring();
 		/* animate */
 		for (c=0;c <= cmax;c++) {	/* how many we can fill up before hitting the end of the ring */
@@ -82,10 +82,10 @@ int main() {
 			else
 				ring_emit((3 << 23) | (1 << 3)); /* pipe B: wait for HBLANK */
 
-			mi_load_imm(0x700C0,(1 << 28) | 0x20 | 3);
-			mi_load_imm(0x700C8,(y1 << 16) | x1);
-			mi_load_imm(0x70080,(1 << 28) | 0x20 | 3);
-			mi_load_imm(0x70088,(y2 << 16) | x2);
+			mi_load_register_imm(0x700C0,(1 << 28) | 0x20 | 3);
+			mi_load_register_imm(0x700C8,(y1 << 16) | x1);
+			mi_load_register_imm(0x70080,(1 << 28) | 0x20 | 3);
+			mi_load_register_imm(0x70088,(y2 << 16) | x2);
 			/* fun with the COLOR_BLIT */
 			color_blit_fill((1280*2*4)+(4*2), /* start at 2nd scan line */
 				1280,768,	/* 640x480 block */

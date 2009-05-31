@@ -28,7 +28,7 @@ void mi_noop_id(uint32_t id);
 void ring_emit_finish();
 void fill_no_ops(int x);
 void set_ring_area(uint32_t base,uint32_t size);
-void mi_load_imm(uint32_t what,uint32_t with);
+void mi_load_register_imm(uint32_t what,uint32_t with);
 void color_blit_fill(uint32_t dest,int width,int height,int pitch,uint32_t val);
 void src_copy_blit(uint32_t dest,int dw,int dh,int dp,uint32_t src,int sp);
 void mi_store_data_index_u64(unsigned int idx,uint64_t value);
