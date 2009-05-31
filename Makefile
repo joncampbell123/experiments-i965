@@ -1,6 +1,6 @@
 all: ds1 ds2 ds3 ds4 ds5 ds6 ds7 ds8 ds9 ring1 ring2 ring3 ring4 ring5 ring6
 
-INTEL_OBJS=find_intel.o util.o mmap.o intelfbhw.o
+INTEL_OBJS=find_intel.o util.o mmap.o intelfbhw.o pgtable.o
 RINGBUFFER=ringbuffer.o
 
 clean:

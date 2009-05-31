@@ -1,4 +1,7 @@
 
+#ifndef __TVBOX_I8XX_H
+#define __TVBOX_I8XX_H
+
 /* COPIED FROM k_tvbox_i8xx */
 
 #define DEBUG_ME
@@ -54,3 +57,4 @@ struct tvbox_i8xx_info {
 
 #define TVBOX_I8XX_MINOR	248
 
+#endif
