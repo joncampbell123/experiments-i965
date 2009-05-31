@@ -1,4 +1,4 @@
-all: ds1 ds2 ds3 ds4 ds5 ds6 ds7 ds8 ds9 ring1 ring2 ring3 ring4 ring5 ring6
+all: ds1 ds2 ds3 ds4 ds5 ds6 ds7 ds8 ds9 ring1 ring2 ring3 ring4 ring5 ring6 ring7
 
 INTEL_OBJS=find_intel.o util.o mmap.o intelfbhw.o pgtable.o uvma.o
 RINGBUFFER=ringbuffer.o
@@ -38,5 +38,7 @@ ring4: ring4.o $(INTEL_OBJS) $(RINGBUFFER)
 ring5: ring5.o $(INTEL_OBJS) $(RINGBUFFER)
 	gcc -o $@ $< $(INTEL_OBJS) $(RINGBUFFER) -lm
 ring6: ring6.o $(INTEL_OBJS) $(RINGBUFFER)
+	gcc -o $@ $< $(INTEL_OBJS) $(RINGBUFFER) -lm
+ring7: ring7.o $(INTEL_OBJS) $(RINGBUFFER)
 	gcc -o $@ $< $(INTEL_OBJS) $(RINGBUFFER) -lm
 
