@@ -23,7 +23,7 @@
 #include "find_intel.h"
 #include "ringbuffer.h"
 #include "util.h"
-#include "mmap.h"
+#include "mmap.h"	/* we re-use mem_fd descriptor to /dev/mem */
 
 #include "tvbox_i8xx.h"
 #include "pgtable.h"
@@ -32,6 +32,7 @@
 int i8xx_pgtable_fd = -1;
 struct tvbox_i8xx_info i8xx_info;
 volatile uint32_t *i8xx_pgtable = NULL;
+volatile uint32_t *i8xx_hwst = NULL;
 int i8xx_pgtable_size = 0;
 
 void restore_i8xx_pgtable() {
@@ -40,6 +41,11 @@ void restore_i8xx_pgtable() {
 }
 
 void close_i8xx_pgtable() {
+	if (i8xx_hwst != NULL) {
+		munmap((void*)i8xx_hwst,4096);
+		i8xx_hwst = NULL;
+	}
+
 	if (i8xx_pgtable != NULL) {
 		munmap((void*)i8xx_pgtable,i8xx_pgtable_size);
 		i8xx_pgtable = NULL;
@@ -70,7 +76,7 @@ int open_i8xx_pgtable() {
 	}
 	i8xx_pgtable_size = i8xx_info.pgtable_size;
 
-	i8xx_pgtable = (volatile uint32_t*)mmap(NULL,i8xx_pgtable_size,PROT_READ|PROT_WRITE,MAP_SHARED,i8xx_pgtable_fd,0);
+	i8xx_pgtable = (volatile uint32_t*)mmap(NULL,i8xx_pgtable_size,PROT_READ|PROT_WRITE,MAP_SHARED,i8xx_pgtable_fd,i8xx_info.pgtable_base);
 	if (i8xx_pgtable == (volatile uint32_t*)(-1)) {
 		fprintf(stderr,"Cannot mmap tvbox pgtable, %s\n",strerror(errno));
 		close_i8xx_pgtable();
@@ -80,6 +86,17 @@ int open_i8xx_pgtable() {
 	/* whatever's there, force it to flush, so weird things don't happen */
 	for (x=0;x < i8xx_pgtable_size;x += 16)
 		_mm_clflush((void const*)((char*)i8xx_pgtable+x));
+
+	i8xx_hwst = NULL;
+	if (i8xx_info.hwst_base != 0) {
+		/* note newer kernels have code to explicitly deny mmap()ing system memory, even for root. we can't use /dev/mem */
+		printf("H/W status page present. mapping that too\n");
+		i8xx_hwst = (volatile uint32_t*)mmap(NULL,4096,PROT_READ|PROT_WRITE,MAP_SHARED,i8xx_pgtable_fd,i8xx_info.hwst_base);
+		if (i8xx_hwst == (volatile uint32_t*)(-1)) {
+			printf("Can't mmap it\n");
+			i8xx_hwst = NULL;
+		}
+	}
 
 	printf("Pgtable driver, %luKB @ 0x%08lX\n",(unsigned long)(i8xx_info.pgtable_size >> 10UL),(unsigned long)i8xx_info.pgtable_base);
 	return 1;
