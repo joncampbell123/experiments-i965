@@ -27,6 +27,7 @@
 
 #include "tvbox_i8xx.h"
 #include "pgtable.h"
+#include "uvma.h"
 
 static int DIE = 0;
 
@@ -36,47 +37,6 @@ void sigma(int x) {
 }
 
 const int seizure_mode = 0;
-
-int uvirt_to_phys_fd = -1;
-
-int open_uvirt_to_phys() {
-	if (uvirt_to_phys_fd >= 0)
-		return 1;
-
-	if ((uvirt_to_phys_fd = open("/proc/self/pagemap",O_RDONLY)) < 0) {
-		fprintf(stderr,"Cannot open pagemap\n");
-		return 0;
-	}
-
-	return 1;
-}
-
-void close_uvirt_to_phys() {
-	if (uvirt_to_phys_fd >= 0) {
-		close(uvirt_to_phys_fd);
-		uvirt_to_phys_fd = -1;
-	}
-}
-
-unsigned long long uvirt_to_phys(unsigned long vma) {
-	uint64_t d;
-
-	if (vma & 4095)
-		return -1LL;
-
-	vma >>= 12UL - 3UL;
-	if (lseek(uvirt_to_phys_fd,vma,SEEK_SET) != vma)
-		return -1LL;
-	if (read(uvirt_to_phys_fd,&d,8) != 8)
-		return -1LL;
-
-	if (!(d & (1ULL << 63ULL)))
-		return -1LL;	/* not present */
-	if (d & (1ULL << 62ULL))
-		return -1LL;	/* swapped out */
-
-	return (d & ((1ULL << 56ULL) - 1ULL)) << 12ULL;
-}
 
 int main() {
 	signal(SIGINT,sigma);
