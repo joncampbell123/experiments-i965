@@ -92,7 +92,7 @@ int main() {
 			i8xx_hwst[c] = 0;
 
 		for (c=0;c <= cmax;c++) {	/* how many we can fill up before hitting the end of the ring */
-			mi_report_head();
+			mi_store_register_mem(MAT_PHYS,(16*4)+i8xx_info.hwst_base,0x2034);	/* copy cp current */
 
 			if (intel_device_chip == INTEL_965)
 				ring_emit((3 << 23) | (1 << 18)); /* pipe B: wait for HBLANK */
@@ -113,7 +113,7 @@ int main() {
 	{
 		unsigned long p = 0,count=5000,np;
 		while (count-- > 0) {
-			while ((np = i8xx_hwst[4]) == p);
+			while ((np = i8xx_hwst[16]) == p);
 			printf("\x0D" "%08lX  ",p = np);
 			fflush(stdout);
 		}

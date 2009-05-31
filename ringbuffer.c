@@ -198,3 +198,14 @@ void mi_report_head(void) {
 		0);
 }
 
+void mi_store_register_mem(unsigned int gtt,unsigned long addr,uint32_t reg) {
+	ring_emit(
+		(0    << 29) |	/* MI_COMMAND */
+		(0x24 << 23) |	/* MI_STORE_REGISTER_MEM */
+		(gtt  << 22) |	/* physical/GTT bit */
+		(1         ));	/* DWORD */
+	ring_emit(reg);
+	ring_emit(addr);
+}
+
+
