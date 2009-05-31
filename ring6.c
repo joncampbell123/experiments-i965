@@ -203,7 +203,7 @@ int main() {
 	}
 	printf("Ringbuffer hit NOPID no-op in %u counts. Success.\n",counter);
 
-	int screen_width = 1024;
+	int screen_width = 1280;
 	int screen_height = 768;
 
 	/* now fill with no-ops and see how fast it really goes.
