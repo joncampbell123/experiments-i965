@@ -203,6 +203,9 @@ int main() {
 	}
 	printf("Ringbuffer hit NOPID no-op in %u counts. Success.\n",counter);
 
+	int screen_width = 1024;
+	int screen_height = 768;
+
 	/* now fill with no-ops and see how fast it really goes.
 	 * this time we tell it to wait for vblank, so the pipeline will be waiting around a lot.
 	 * and hey, maybe this might be a good way to measure the vertical sync rate.
@@ -241,14 +244,14 @@ int main() {
 #endif
 			/* fun with the COLOR_BLIT */
 			src_copy_blit(
-				(1280*2*1)+(1*2),	/* dest */
-				1280,600,	/* 320x240 block */
-				1280*2,		/* dest pitch */
-				(1280*2*2)+(0*2),	/* src */
-				1280*2);
-			color_blit_fill((1280*2*598)+(0*2), /* start at 2nd scan line */
+				(screen_width*2*1)+(1*2),	/* dest */
+				screen_width,600,	/* 320x240 block */
+				screen_width*2,		/* dest pitch */
+				(screen_width*2*2)+(0*2),	/* src */
+				screen_width*2);
+			color_blit_fill((screen_width*2*598)+(0*2), /* start at 2nd scan line */
 				1000,2,	/* 640x480 block */
-				1280*2,		/* pitch */
+				screen_width*2,		/* pitch */
 				c);		/* what to fill with */
 			/* and from our buffer */
 			int sypan = (c % ((512 - 100) * 2));
@@ -256,9 +259,9 @@ int main() {
 				sypan = ((512 - 100) * 2) - sypan;
 
 			src_copy_blit(
-				(1280*2*600),
+				(screen_width*2*600),
 				512,100,
-				1280*2,
+				screen_width*2,
 				(8UL << 20ULL)+(512*2*sypan),		/* src @ 16MB mark */
 				512*2);
 			ring_emit_finish();
