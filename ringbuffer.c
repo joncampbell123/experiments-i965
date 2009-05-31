@@ -162,3 +162,32 @@ void mi_store_data_index_u64(unsigned int idx,uint64_t value) {
 	ring_emit((uint32_t)(value >> 32ULL));
 }
 
+/* warning: this writes to PHYSICAL MEMORY ADDRESSES. this can be dangerous.
+ *          correspondingly if you use this from a batch buffer Intel will ignore it.
+ *
+ *          gtt: 0 = physical memory addr   1 = GTT mapped */
+void mi_store_data_imm(unsigned int gtt,unsigned long addr,uint32_t value) {
+	ring_emit(
+		(0    << 29) |	/* MI_COMMAND */
+		(0x20 << 23) |	/* MI_STORE_DATA_IMM */
+		(gtt  << 22) |	/* physical/GTT bit */
+		(1    << 21) |	/* from global graphics */
+		(2         ));	/* DWORD */
+	ring_emit(0);
+	ring_emit(addr);
+	ring_emit(value);
+}
+
+void mi_store_data_imm_u64(unsigned int gtt,unsigned long addr,uint64_t value) {
+	ring_emit(
+		(0    << 29) |	/* MI_COMMAND */
+		(0x20 << 23) |	/* MI_STORE_DATA_IMM */
+		(gtt  << 22) |	/* physical/GTT bit */
+		(1    << 21) |	/* from global graphics */
+		(3         ));	/* DWORD */
+	ring_emit(0);
+	ring_emit(addr);
+	ring_emit((uint32_t)(value >>  0ULL));
+	ring_emit((uint32_t)(value >> 32ULL));
+}
+

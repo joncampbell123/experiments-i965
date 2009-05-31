@@ -1,3 +1,6 @@
+#ifndef __RINGBUFFER_H
+#define __RINGBUFFER_H
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -30,7 +33,16 @@ void color_blit_fill(uint32_t dest,int width,int height,int pitch,uint32_t val);
 void src_copy_blit(uint32_t dest,int dw,int dh,int dp,uint32_t src,int sp);
 void mi_store_data_index_u64(unsigned int idx,uint64_t value);
 void mi_store_data_index(unsigned int idx,uint32_t value);
+void mi_store_data_imm(unsigned int gtt,unsigned long addr,uint32_t value);
+void mi_store_data_imm_u64(unsigned int gtt,unsigned long addr,uint64_t value);
 void wait_ring_space(unsigned int x);
 void start_ring();
 void stop_ring();
+
+enum {
+	MAT_PHYS=0,
+	MAT_GTT=1
+};
+
+#endif /* __RINGBUFFER_H */
 
