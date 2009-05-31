@@ -7,7 +7,7 @@ clean:
 	rm -f ds? ring? *.o
 
 .c.o:
-	gcc -c -o $@ $<
+	gcc -mmmx -msse -msse2 -c -o $@ $<
 
 ds1: ds1.o $(INTEL_OBJS)
 	gcc -o $@ $< $(INTEL_OBJS)

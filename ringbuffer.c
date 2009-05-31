@@ -124,7 +124,7 @@ void src_copy_blit(uint32_t dest,int dw,int dh,int dp,uint32_t src,int sp) {
 		d1 |= (1 << 26); /* My Intel 855GM based laptops demand this, apparently, or else this OP locks up the 2D blitter */
 	ring_emit((2 << 29) | (0x43 << 22) | (3 << 20) | 4);
 	ring_emit(d1);	/* SRCCOPY 16bpp 565 */
-	ring_emit((dh << 16) | (dh * 2));
+	ring_emit((dh << 16) | (dw * 2));
 	ring_emit(dest);
 	ring_emit(sp);
 	ring_emit(src);
