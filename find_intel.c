@@ -20,7 +20,8 @@
 const char *intel_device_chip_str[] = {
 	"(unknown)",		/* INTEL_UNKNOWN */
 	"855",			/* INTEL_855 */
-	"965"			/* INTEL_965 */
+	"965",			/* INTEL_965 */
+	"Clarkdale"		/* INTEL_CLARKDALE */
 };
 
 unsigned int intel_device_chip;
@@ -143,6 +144,9 @@ int get_intel_resources() {
 			break;
 		case 0x2A02:
 			intel_device_chip = INTEL_965;
+			break;
+		case 0x0042:
+			intel_device_chip = INTEL_CLARKDALE;
 			break;
 	};
 

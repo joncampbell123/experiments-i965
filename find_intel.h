@@ -4,7 +4,8 @@
 enum {
 	INTEL_UNKNOWN=0,
 	INTEL_855,
-	INTEL_965
+	INTEL_965,
+	INTEL_CLARKDALE
 };
 
 extern const char *intel_device_chip_str[];
